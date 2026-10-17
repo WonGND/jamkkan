@@ -14,7 +14,7 @@ android {
         targetSdk = 34
         // GitHub Actions 실행 번호를 버전 코드로 써서, 새로 받은 APK가 항상 '업데이트'로 설치되게 함
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
-        versionName = "0.5.0"
+        versionName = "0.6.0"
     }
 
     // 개인 테스트용 서명 키 (저장소에 포함). 다른 사람에게 배포하기 전에는 비공개 키로 바꿔야 함

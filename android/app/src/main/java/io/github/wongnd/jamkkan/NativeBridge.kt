@@ -55,6 +55,7 @@ class NativeBridge(private val activity: MainActivity) {
     /** 원래 앱(쇼핑·결제 앱)으로 돌아가기 */
     @JavascriptInterface
     fun returnToPreviousApp() {
+        WatchService.markUserReturn()
         activity.runOnUiThread { activity.moveTaskToBack(true) }
     }
 }

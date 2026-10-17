@@ -27,7 +27,8 @@ data class WatchConfig(val apps: Map<String, String>, val cooldownMin: Long) {
                         if (pkg.isNotEmpty()) apps[pkg] = a.optString("label", pkg)
                     }
                 }
-                WatchConfig(apps, o.optLong("cooldownMin", 10).coerceIn(1, 120))
+                // cooldownMin 0 = 매번 물어보기
+                WatchConfig(apps, o.optLong("cooldownMin", 10).coerceIn(0, 120))
             } catch (_: Exception) {
                 WatchConfig(emptyMap(), 10)
             }

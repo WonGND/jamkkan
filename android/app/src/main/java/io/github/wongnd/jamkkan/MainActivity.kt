@@ -93,7 +93,12 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         // 웹 화면 안의 뒤로 가기(판단 단계, 시트)를 먼저 처리하고, 더 없으면 원래 앱으로
-        if (webView.canGoBack()) webView.goBack() else moveTaskToBack(true)
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            WatchService.markUserReturn()
+            moveTaskToBack(true)
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

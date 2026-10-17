@@ -2,7 +2,7 @@
    배포할 때마다 CACHE 버전을 올려 주세요 (예: v0.3.0 → v0.3.1).
    화면은 캐시에서 바로 띄우고 뒤에서 새 버전을 받아 둡니다.
    → 루틴으로 열릴 때 네트워크를 기다리지 않음. 새 버전은 다음 실행부터 적용. */
-const CACHE = 'jamkkan-v0.5.0';
+const CACHE = 'jamkkan-v0.6.0';
 const ASSETS = [
   './',
   './index.html',
