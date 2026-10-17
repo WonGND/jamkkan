@@ -1,7 +1,8 @@
 # 네이티브(안드로이드 앱) 전환 가이드
 
-> 상태: **아직 만들지 않음.** 웹(PWA) 쪽은 이 문서의 규약대로 준비돼 있다.
-> 네이티브 셸을 만들 때 이 문서를 그대로 Claude Code에 넘기면 된다.
+> 상태: **v0.5.0에서 만듦** (`android/`). GitHub Actions가 APK를 빌드해 Release에 올린다.
+> 받는 주소: https://github.com/WonGND/jamkkan/releases/latest/download/jamkkan.apk
+> 실제 갤럭시에서의 감지·권한·배터리 동작은 아직 검증 전.
 
 ## 왜 바꾸나
 | | 웹(PWA) + 모드 및 루틴 | 네이티브 앱 |
@@ -67,6 +68,20 @@ WebView 설정: `javaScriptEnabled = true`, `domStorageEnabled = true` (localSto
 
 갤럭시는 **배터리 → 백그라운드 사용 제한 → 절전 예외 앱**에 잠깐만을 넣어야 서비스가 안 죽는다.
 (접근성 서비스로도 감지할 수 있지만 권한이 훨씬 강해서 사용 정보 접근을 쓴다.)
+
+## 지금 구현 (android/)
+| 파일 | 하는 일 |
+|---|---|
+| `MainActivity.kt` | WebView 하나. 앱 안에 넣은 웹 화면을 `https://appassets.androidplatform.net/assets/web/app/index.html`로 띄움. 브레이크 실행 정보 전달, 뒤로 가기 처리 |
+| `NativeBridge.kt` | `JamkkanNative` 다섯 가지 메서드 |
+| `WatchService.kt` | 1초마다 앞에 있는 앱 확인 → 고른 앱이면 잠깐만 띄움. 잠깐만에서 돌아간 경우 무시, 같은 앱은 다시 묻지 않는 시간 동안 무시. 안드로이드 15 대응으로 1px 투명 창을 잠깐 띄운 채 화면을 엶 |
+| `Perms.kt` | 권한 상태 확인, 설정 화면 열기 |
+| `BootReceiver.kt` | 재부팅·업데이트 후 감지 다시 켜기 |
+| `app/build.gradle.kts` | 빌드 때 저장소의 `app/index.html`과 `icons/`를 앱 안으로 복사 (화면 원본은 하나) |
+| `.github/workflows/android.yml` | push → APK 빌드 → Release 업로드 |
+
+- 서명: `android/app/debug.keystore` (개인 테스트용, 저장소에 포함). 남에게 배포하기 전에 비공개 키로 바꿀 것
+- targetSdk 34, minSdk 26
 
 ## 전환할 때 주의
 - **데이터가 자동으로 넘어오지 않는다.** 크롬 PWA의 저장소와 앱 WebView의 저장소는 서로 다르다.

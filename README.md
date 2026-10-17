@@ -5,7 +5,9 @@
 ## 구조
 ```
 jamkkan/
-├─ index.html              설치 안내 페이지 (두 앱으로 가는 링크)
+├─ index.html              설치 안내 페이지 (APK 받기)
+├─ android/                안드로이드 앱 (WebView + 앱 실행 감지)
+├─ docs/NATIVE.md          웹↔앱 규약, 구조
 ├─ sw.js                   서비스 워커 (app/, brake/ 함께 관리)
 ├─ icons/                  icon-* = 본 앱(파랑), brake-* = 브레이크(빨강)
 ├─ app/                    잠깐만: 기록·판단 본 앱
@@ -30,6 +32,8 @@ jamkkan/
 잠깐만 앱 → 설정 → 앱과 연결하기 화면의 순서를 따른다.
 모드 및 루틴: 조건 `앱 열림`(연결할 앱들) → 동작 `앱 열기`(잠깐만 브레이크).
 
-## 네이티브 앱으로 바꾸기 (나중)
-`app/index.html`은 `window.JamkkanNative`가 있으면 네이티브 모드로 동작하도록 준비돼 있다(`Platform` 객체).
-안드로이드 셸이 지켜야 할 규약은 [docs/NATIVE.md](docs/NATIVE.md).
+## 안드로이드 앱 (android/) — 제품 방향
+- 앱 하나만 설치하면 고른 쇼핑·배달·결제 앱이 켜질 때 잠깐만이 먼저 켜진다 (루틴 불필요)
+- `main`에 push하면 GitHub Actions가 APK를 빌드해서 Release에 올린다
+  → 휴대폰: https://github.com/WonGND/jamkkan/releases/latest/download/jamkkan.apk
+- 화면은 `app/index.html` 그대로 (빌드 때 앱 안으로 복사). 규약·구조는 [docs/NATIVE.md](docs/NATIVE.md)
