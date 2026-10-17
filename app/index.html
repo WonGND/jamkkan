@@ -316,7 +316,7 @@ button.row:active{background:var(--fill)}
    - 데이터: localStorage 'jamkkan.v1' (서버 없음)
    - 기능: ① 빠른 판단 ② 대기함 ③ 참은 돈 + 이번 주 지출
    ========================================================= */
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const KEY = 'jamkkan.v1';
 const HOUR = 3600e3;
 const DAY = 24 * HOUR;
@@ -749,7 +749,7 @@ function renderHome() {
         <button class="btn btn-weak" style="margin-top:16px;height:48px;border-radius:14px;font-size:16px" data-act="openGuide">앱과 연결하기</button></section>`;
     } else if (!S.brake.log.length) {
       connect = `<section class="card"><div class="sec-head"><h2>브레이크가 아직 한 번도 안 켜졌어요</h2></div>
-        <div class="cap" style="margin-top:2px">루틴 연결을 마무리하고, 연결한 앱을 열어 확인해 보세요</div>
+        <div class="cap" style="margin-top:2px">${Platform.native ? '권한을 허용하고, 연결한 앱을 열어 확인해 보세요' : '루틴 연결을 마무리하고, 연결한 앱을 열어 확인해 보세요'}</div>
         <button class="btn btn-weak" style="margin-top:16px;height:48px;border-radius:14px;font-size:16px" data-act="openGuide">연결 확인하기</button></section>`;
     }
   }
@@ -1388,7 +1388,7 @@ ${Platform.native ? nativeGuideSteps() : `
         <ol>
           <li>연결한 앱을 열면 브레이크가 뜨나요?</li>
           <li>‘그냥 둘러보는 중이에요’를 누르면 원래 앱으로 돌아가나요?</li>
-          <li>돌아간 뒤 브레이크가 또 뜨지는 않나요? 또 뜨면 아래 기록에 ‘방금 넘겨서 바로 돌아감’이 쌓여요.</li>
+          <li>${Platform.native ? '돌아간 뒤 브레이크가 또 뜨지는 않나요?' : '돌아간 뒤 브레이크가 또 뜨지는 않나요? 또 뜨면 아래 기록에 ‘방금 넘겨서 바로 돌아감’이 쌓여요.'}</li>
         </ol>
         <div style="margin-top:12px">${log.length ? log.map((x) => `<div class="logrow"><span>${esc(whenLabel(x.t))}</span><b>${esc(BRAKE_LOG_LABEL[x.k] || x.k)}</b></div>`).join('') : '<p>아직 브레이크가 켜진 기록이 없어요</p>'}</div>
       </div></div>

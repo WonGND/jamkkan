@@ -1,0 +1,58 @@
+name: Android APK
+
+# android/ 나 웹 화면(app/index.html)이 바뀌면 APK를 새로 빌드해서 GitHub Release에 올림.
+# 휴대폰에서 받는 고정 주소: https://github.com/WonGND/jamkkan/releases/latest/download/jamkkan.apk
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'app/index.html'
+      - 'icons/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk jamkkan.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jamkkan-apk
+          path: jamkkan.apk
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep -oP 'versionName = "\K[^"]+' android/app/build.gradle.kts)
+          TAG="apk-v${VER}-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" jamkkan.apk \
+            --title "잠깐만 앱 ${VER} (빌드 ${GITHUB_RUN_NUMBER})" \
+            --notes "휴대폰에서 jamkkan.apk 를 눌러 받은 뒤 설치하세요. 커밋: ${GITHUB_SHA::7}" \
+            --latest
