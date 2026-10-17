@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>잠깐만 설치</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f4f6">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root{--bg:#f2f4f6;--card:#fff;--fill:#f2f4f6;--fg:#191f28;--sub:#6b7684;--muted:#8b95a1;--primary:#3182f6;--weak-bg:#e8f3ff;--weak-fg:#1b64da;--red:#f04452}
+@media (prefers-color-scheme: dark){:root{--bg:#101114;--card:#1d1f24;--fill:#2b2f36;--fg:#f2f4f6;--sub:#a0a8b2;--muted:#848d97;--weak-bg:rgba(49,130,246,.18);--weak-fg:#90c2ff}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Toss Product Sans",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.5;word-break:keep-all;-webkit-font-smoothing:antialiased}
+main{max-width:480px;margin:0 auto;padding:calc(40px + env(safe-area-inset-top)) 16px 40px}
+h1{font-size:26px;line-height:35px;font-weight:700;padding:0 8px}
+.lead{font-size:16px;color:var(--sub);margin-top:8px;padding:0 8px}
+.card{display:flex;gap:16px;align-items:center;background:var(--card);border-radius:20px;padding:20px;margin-top:12px;text-decoration:none;color:inherit;transition:transform .1s ease}
+.card:active{transform:scale(.98)}
+.card img{width:52px;height:52px;border-radius:14px;flex:none}
+.card b{display:block;font-size:17px}
+.card span{display:block;font-size:14px;color:var(--sub);margin-top:2px}
+.how{background:var(--card);border-radius:20px;padding:20px;margin-top:24px}
+.how h2{font-size:15px;font-weight:700}
+.how ol{padding-left:18px;margin-top:8px;font-size:14px;color:var(--sub)}
+.how li+li{margin-top:4px}
+</style>
+</head>
+<body>
+<main>
+  <h1>잠깐만 설치하기</h1>
+  <p class="lead">앱이 두 개예요. 둘 다 크롬에서 열어 설치해 주세요.</p>
+  <a class="card" href="app/"><img src="icons/icon-192.png" alt=""><div><b>잠깐만</b><span>기록하고 판단하는 본 앱이에요</span></div></a>
+  <a class="card" href="brake/"><img src="icons/brake-192.png" alt=""><div><b>잠깐만 브레이크</b><span>쇼핑·결제 앱이 켜질 때 루틴이 대신 열어 주는 입구예요</span></div></a>
+  <div class="how">
+    <h2>설치하는 법</h2>
+    <ol>
+      <li>위 카드를 눌러 페이지를 열어요</li>
+      <li>크롬 오른쪽 위 ⋮ 메뉴 → ‘앱 설치’ (또는 ‘홈 화면에 추가’)</li>
+      <li>두 번째 앱도 같은 방법으로 설치해요</li>
+      <li>잠깐만 앱의 설정 → ‘앱과 연결하기’에서 루틴 연결을 이어서 해요</li>
+    </ol>
+  </div>
+</main>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
+</body>
+</html>

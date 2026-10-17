@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>잠깐만</title>
+<meta name="description" content="사기 전에 한 번 더 생각하게 돕는 지출 브레이크">
+<meta id="themeColor" name="theme-color" content="#f2f4f6">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-180.png">
+<style>
+/* 디자인 토큰: 토스 DESIGN.md(TDS Mobile)의 색·버튼 규격을 따름.
+   다크 모드 값, 카드 반경 20px, 시트 반경 24px은 로컬 확장값. */
+:root{
+  --bg:#f2f4f6; --card:#ffffff; --sheet:#ffffff;
+  --fill:#f2f4f6; --fill-press:#e5e8eb;
+  --fg:#191f28; --fg2:#333d4b; --body:#4e5968; --sub:#6b7684; --muted:#8b95a1; --faint:#b0b8c1;
+  --border:#e5e8eb; --track:#e5e8eb;
+  --primary:#3182f6; --primary-press:#2272eb;
+  --weak-bg:#e8f3ff; --weak-fg:#1b64da;
+  --danger:#e42939; --danger-weak:#ffeeee;
+  --green-fg:#029359; --green-weak:#f0faf6;
+  --dim:rgba(0,0,0,.4); --toast:#333d4b;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101114; --card:#1d1f24; --sheet:#24272d;
+    --fill:#2b2f36; --fill-press:#363b43;
+    --fg:#f2f4f6; --fg2:#e5e8eb; --body:#c3c9d0; --sub:#a0a8b2; --muted:#848d97; --faint:#6b7480;
+    --border:#30343b; --track:#353a42;
+    --primary:#3182f6; --primary-press:#4593fc;
+    --weak-bg:rgba(49,130,246,.18); --weak-fg:#90c2ff;
+    --danger:#f66570; --danger-weak:rgba(240,68,82,.16);
+    --green-fg:#3fd599; --green-weak:rgba(3,178,108,.16);
+    --dim:rgba(0,0,0,.6); --toast:#3a3f47;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  font-family:"Toss Product Sans",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Roboto,sans-serif;
+  background:var(--bg);color:var(--fg);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  overscroll-behavior-y:none;word-break:keep-all;overflow-wrap:anywhere;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit}
+input{font:inherit;color:inherit}
+:focus{outline:none}
+button:focus-visible,input:focus-visible{box-shadow:0 0 0 1px #8ac0ff,0 0 0 3px #b8d9ff}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* ---------- 버튼 (TDS Mobile xlarge: 56px / 16px / 17px 600, 누르면 scale .96) ---------- */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:56px;padding:0 20px;border-radius:16px;
+  font-size:17px;font-weight:600;line-height:1;transition:transform .1s ease,background-color .1s ease;text-align:center}
+.btn:active:not(:disabled){transform:scale(.96)}
+.btn:disabled{opacity:.36;cursor:default}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active:not(:disabled){background:var(--primary-press)}
+.btn-weak{background:var(--weak-bg);color:var(--weak-fg)}
+.btn-light{background:var(--fill);color:var(--fg2)}
+.btn-light:active:not(:disabled){background:var(--fill-press)}
+.btn-danger{background:var(--danger-weak);color:var(--danger)}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
+.btn-row .btn.grow{flex:1.6}
+.tbtn{display:block;margin:0 auto;padding:10px 14px;border-radius:10px;font-size:15px;font-weight:600;color:var(--sub);text-align:center}
+.tbtn:active{background:var(--fill)}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--sub)}
+.icon-btn:active{background:var(--fill)}
+.icon-btn svg{width:24px;height:24px}
+
+/* ---------- 홈 ---------- */
+#app{max-width:480px;margin:0 auto;padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(6px + env(safe-area-inset-top)) 8px 6px 20px}
+.brand{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.card{background:var(--card);border-radius:20px;padding:24px 20px;margin:0 16px 12px}
+.label{font-size:15px;font-weight:500;color:var(--sub)}
+.big{font-size:30px;line-height:40px;font-weight:700;margin-top:2px;letter-spacing:-.01em}
+.big.danger{color:var(--danger)}
+.big.blue{color:var(--primary)}
+.big.dim{color:var(--muted)}
+.cap{font-size:13px;line-height:19.5px;color:var(--muted);margin-top:6px}
+.bar{height:8px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--primary);transition:width .3s var(--ease)}
+.bar i.over{background:var(--danger)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px}
+.qtile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0 12px;border-radius:16px;background:var(--fill);transition:transform .1s ease}
+.qtile:active{transform:scale(.96);background:var(--fill-press)}
+.qtile .emo{font-size:26px;line-height:1}
+.qtile .lb{font-size:13px;font-weight:600;color:var(--body)}
+.sec-head{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.sec-head h2{font-size:17px;font-weight:700}
+.sec-head .cnt{font-size:17px;font-weight:700;color:var(--primary)}
+.empty{font-size:15px;color:var(--muted);padding:12px 0 2px}
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 8px;margin:0 -8px;width:calc(100% + 16px);border-radius:12px}
+button.row:active{background:var(--fill)}
+.row .emo{font-size:22px;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--fill);flex:none}
+.row .main{flex:1;min-width:0}
+.row .t{font-size:16px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .s{font-size:13px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r{flex:none;text-align:right;font-size:15px;font-weight:600;color:var(--fg2)}
+.row .r .due{color:var(--primary)}
+.row .r small{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-top:1px}
+.more{display:flex;align-items:center;justify-content:space-between;width:calc(100% + 16px);margin:12px -8px -8px;padding:10px 8px;border-radius:12px;font-size:15px;font-weight:600;color:var(--sub)}
+.more:active{background:var(--fill)}
+.more svg{width:18px;height:18px;transition:transform .2s ease}
+.more.open svg{transform:rotate(90deg)}
+.divider{height:1px;background:var(--border);margin:16px 0 8px}
+.badge{display:inline-block;font-size:12px;font-weight:600;line-height:18px;padding:2px 7px;border-radius:6px;vertical-align:middle}
+.badge.weak{background:var(--weak-bg);color:var(--weak-fg)}
+.badge.green{background:var(--green-weak);color:var(--green-fg)}
+.badge.grey{background:var(--fill);color:var(--sub)}
+.score{display:flex;align-items:center;gap:12px;padding:10px 0}
+.score .main{flex:1;min-width:0}
+.score .t{font-size:15px;font-weight:600}
+.score .s{font-size:13px;color:var(--muted);margin-top:1px}
+.score .v{font-size:20px;font-weight:700;color:var(--primary)}
+.score .v.dim{color:var(--faint)}
+.foot{font-size:12px;color:var(--faint);text-align:center;padding:8px 24px 0}
+.bottom-cta{position:fixed;left:0;right:0;bottom:0;z-index:10;max-width:480px;margin:0 auto;
+  padding:20px 16px calc(16px + env(safe-area-inset-bottom));
+  background:linear-gradient(to bottom,rgba(0,0,0,0),var(--bg) 32%)}
+
+/* ---------- 전체 화면 페이지 ---------- */
+.page{position:fixed;inset:0;z-index:20;background:var(--card);overscroll-behavior:contain;
+  transform:translateX(100%);visibility:hidden;transition:transform .28s var(--ease),visibility 0s .28s}
+.page.open{transform:none;visibility:visible;transition:transform .28s var(--ease)}
+#pg-recheck{z-index:25;transform:translateY(100%)}
+#pg-recheck.open{transform:none}
+.pin{max-width:480px;height:100%;margin:0 auto;display:flex;flex-direction:column}
+.phead{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px;min-height:56px}
+.phead .ttl{flex:1;font-size:17px;font-weight:600;text-align:center}
+.phead .side{width:44px;flex:none;font-size:15px;font-weight:600;color:var(--muted);text-align:center}
+.pbody{flex:1;min-height:0;overflow-y:auto;padding:8px 24px 24px;display:flex;flex-direction:column;overscroll-behavior:contain}
+.pfoot{flex:none;padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.ptitle{font-size:26px;line-height:35px;font-weight:700;letter-spacing:-.01em}
+.psub{font-size:16px;color:var(--sub);margin-top:6px}
+.spacer{flex:1;min-height:16px}
+.hero-input{width:100%;margin-top:32px;border:0;border-bottom:2px solid var(--border);background:none;padding:8px 0;font-size:24px;font-weight:600;border-radius:0;transition:border-color .15s ease}
+.hero-input:focus{border-color:var(--primary);box-shadow:none}
+.hero-input::placeholder{color:var(--faint)}
+.amount{font-size:34px;line-height:46px;font-weight:700;margin-top:28px;letter-spacing:-.01em}
+.amount.zero{color:var(--faint)}
+.amount span{border-radius:8px;padding:0 4px;margin:0 -4px}
+.amount.fresh span{background:var(--weak-bg)}
+.work{font-size:16px;font-weight:600;color:var(--primary);margin-top:4px;min-height:24px}
+.chips{display:flex;gap:8px;margin-top:20px}
+.chip{height:36px;padding:0 14px;border-radius:18px;background:var(--fill);font-size:14px;font-weight:600;color:var(--body)}
+.chip:active{background:var(--fill-press)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);margin:12px -8px 0}
+.key{height:58px;border-radius:14px;font-size:24px;font-weight:500;display:grid;place-items:center;color:var(--fg)}
+.key:active{background:var(--fill)}
+.key svg{width:26px;height:26px;color:var(--sub)}
+
+/* 판단 카테고리 */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:28px}
+.ctile{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:14px;min-height:124px;padding:18px 16px 16px;border-radius:16px;background:var(--fill);text-align:left;transition:transform .1s ease}
+.ctile:active{transform:scale(.96);background:var(--fill-press)}
+.ctile .emo{font-size:32px;line-height:1}
+.ctile b{display:block;font-size:17px;font-weight:700;color:var(--fg)}
+.ctile small{display:block;font-size:13px;line-height:18px;color:var(--muted);margin-top:2px}
+
+/* 판단 질문 */
+.jitem{background:var(--fill);border-radius:16px;padding:16px 18px}
+.jitem .n{font-size:15px;font-weight:600;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jitem .p{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:2px}
+.jitem .p b{font-size:20px;font-weight:700}
+.steps{display:flex;gap:6px;margin-top:28px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--track)}
+.steps i.on{background:var(--primary)}
+.qtitle{font-size:26px;line-height:35px;font-weight:700;margin-top:20px;letter-spacing:-.01em}
+.qwrap{animation:qin .22s var(--ease)}
+@keyframes qin{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.ans-row{display:flex;gap:8px}
+.ans{flex:1;height:64px;border-radius:16px;background:var(--fill);font-size:18px;font-weight:600;color:var(--fg);transition:transform .1s ease;text-align:center}
+.ans:active{transform:scale(.96);background:var(--fill-press)}
+
+/* 결과 */
+.result{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:40px}
+.result .emo{font-size:56px;line-height:1}
+.result h1{font-size:24px;line-height:33px;font-weight:700;margin-top:20px}
+.result p{font-size:16px;color:var(--sub);margin-top:8px}
+.result .jitem{width:100%;margin-top:28px;text-align:left}
+.reason{font-size:14px;color:var(--sub);margin-top:10px}
+
+/* ---------- 시트 ---------- */
+.dim{position:fixed;inset:0;z-index:40;background:var(--dim);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility 0s .2s}
+.dim.open{opacity:1;visibility:visible;transition:opacity .2s ease}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--sheet);border-radius:24px 24px 0 0;padding:12px 20px calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(100%);visibility:hidden;transition:transform .28s var(--ease),visibility 0s .28s}
+.sheet.open{transform:none;visibility:visible;transition:transform .28s var(--ease)}
+.handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
+.stitle{font-size:22px;line-height:31px;font-weight:700}
+.sdesc{font-size:15px;color:var(--sub);margin-top:6px}
+.sheet .amount{margin-top:16px}
+.sheet .btn-col{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+
+/* ---------- 설정 ---------- */
+.group{font-size:13px;font-weight:600;color:var(--muted);margin:32px 0 4px}
+.group:first-child{margin-top:8px}
+.field{margin-top:14px}
+.field>label,.flabel{display:block;font-size:14px;font-weight:500;color:var(--sub);margin-bottom:6px}
+.inbox{display:flex;align-items:center;height:52px;padding:0 16px;border-radius:12px;background:var(--fill);border:2px solid transparent;transition:border-color .15s ease,background-color .15s ease}
+.inbox:focus-within{border-color:var(--primary);background:var(--card)}
+.inbox input{flex:1;min-width:0;border:0;background:none;font-size:17px;font-weight:600;box-shadow:none}
+.inbox input::placeholder{color:var(--faint);font-weight:500}
+.inbox .unit{flex:none;margin-left:6px;color:var(--muted);font-weight:500}
+.help{font-size:13px;line-height:19.5px;color:var(--muted);margin-top:6px}
+.wage{margin-top:16px;padding:16px 18px;border-radius:16px;background:var(--weak-bg)}
+.wage .k{font-size:14px;font-weight:500;color:var(--weak-fg)}
+.wage .v{font-size:22px;font-weight:700;color:var(--weak-fg);margin-top:2px}
+.wage .f{font-size:13px;color:var(--weak-fg);opacity:.8;margin-top:2px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--fill)}
+.seg button{flex:1;height:40px;border-radius:9px;font-size:15px;font-weight:600;color:var(--sub);text-align:center}
+.seg button.on{background:var(--card);color:var(--fg)}
+.qedit{margin-top:12px;padding:16px;border-radius:16px;background:var(--fill)}
+.qedit .qn{font-size:13px;font-weight:600;color:var(--muted)}
+.qedit .inbox{background:var(--card);margin-top:8px;height:48px}
+.qedit .inbox input{font-size:16px}
+.qedit .two{display:flex;gap:8px;margin-top:8px}
+.qedit .two>div{flex:1;min-width:0}
+.qedit .two .flabel{font-size:12px;margin:0 0 4px 2px}
+.ver{font-size:12px;color:var(--faint);text-align:center;margin-top:24px}
+
+/* ---------- 브레이크 (루틴 전용 입구) ---------- */
+#pg-brake{z-index:15;transform:none;opacity:0;transition:opacity .2s ease,visibility 0s .2s}
+#pg-brake.open{opacity:1;visibility:visible;transition:opacity .2s ease}
+.blabel{align-self:flex-start;font-size:13px;font-weight:600;color:var(--weak-fg);background:var(--weak-bg);padding:4px 10px;border-radius:8px}
+.bstats{display:flex;gap:8px;margin-top:20px}
+.bstats>div{flex:1;min-width:0;background:var(--fill);border-radius:16px;padding:14px 16px}
+.bstats span{display:block;font-size:13px;color:var(--sub)}
+.bstats b{display:block;font-size:19px;font-weight:700;margin-top:2px}
+.bstats b.neg{color:var(--danger)}
+.appgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.appchip{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:14px 4px 12px;border-radius:16px;background:var(--fill);text-align:center;transition:transform .1s ease}
+.appchip:active{transform:scale(.96);background:var(--fill-press)}
+.appchip .emo{font-size:24px;line-height:1}
+.appchip .nm{font-size:13px;font-weight:600;color:var(--body);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bnote{font-size:13px;color:var(--muted);text-align:center;margin-top:10px}
+.bcenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 28px 40px}
+.bcenter .emo{font-size:52px;line-height:1}
+.bcenter h1{font-size:24px;line-height:33px;font-weight:700;margin-top:18px}
+.bcenter p{font-size:16px;color:var(--sub);margin-top:8px}
+.bcenter .hint{font-size:13px;color:var(--muted);margin-top:16px}
+
+/* 앱 고르기 · 연결 가이드 */
+.pickgrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pick{height:38px;padding:0 14px;border-radius:19px;background:var(--fill);border:1.5px solid transparent;font-size:14px;font-weight:600;color:var(--body);text-align:center}
+.pick.on{background:var(--weak-bg);color:var(--weak-fg);border-color:var(--primary)}
+.sheet .group{margin-top:24px}
+.gstep{display:flex;gap:14px;margin-top:28px}
+.gstep .n{flex:none;width:26px;height:26px;border-radius:13px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;display:grid;place-items:center}
+.gstep .n.done{background:var(--green-fg)}
+.gstep .c{flex:1;min-width:0}
+.gstep h3{font-size:17px;line-height:26px;font-weight:700}
+.gstep p,.gstep li{font-size:14px;line-height:21px;color:var(--sub)}
+.gstep p{margin-top:4px}
+.gstep ol{padding-left:18px;margin-top:6px}
+.gstep li+li{margin-top:4px}
+.gstep li b{color:var(--fg2)}
+.gstep .btn{height:44px;border-radius:12px;font-size:15px;margin-top:12px}
+.urlbox{margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--fill);font-size:13px;color:var(--fg2);word-break:break-all;user-select:all}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:13px;font-weight:600;padding:4px 10px;border-radius:8px;background:var(--fill);color:var(--body)}
+.logrow{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--sub)}
+.logrow b{font-weight:600;color:var(--fg2)}
+
+/* ---------- 토스트 ---------- */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:60;max-width:448px;margin:0 auto;
+  display:flex;align-items:center;gap:12px;padding:14px 16px 14px 20px;border-radius:16px;background:var(--toast);color:#fff;font-size:15px;font-weight:500;
+  opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s ease,transform .2s var(--ease)}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast span{flex:1}
+.toast button{flex:none;color:#90c2ff;font-weight:600;padding:4px 6px;margin:-4px -6px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:0s !important;animation-duration:0s !important}
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px">이 앱은 자바스크립트가 필요해요.</p></noscript>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand">잠깐만</div>
+    <button class="icon-btn" data-act="openSettings" aria-label="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </header>
+  <main id="home"></main>
+  <div class="bottom-cta">
+    <button class="btn btn-primary" data-act="startJudge">사려는 게 있어요</button>
+  </div>
+</div>
+
+<section class="page" id="pg-brake" aria-label="잠깐만 브레이크"></section>
+<section class="page" id="pg-judge" role="dialog" aria-modal="true" aria-label="구매 판단"></section>
+<section class="page" id="pg-guide" role="dialog" aria-modal="true" aria-label="앱과 연결하기"></section>
+<section class="page" id="pg-recheck" role="dialog" aria-modal="true" aria-label="대기함 다시 묻기"></section>
+<section class="page" id="pg-settings" role="dialog" aria-modal="true" aria-label="설정"></section>
+<div class="dim" id="dim" data-act="dimClose"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true"></section>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   잠깐만 v0.1.0 — 지출 브레이크 MVP
+   - 데이터: localStorage 'jamkkan.v1' (서버 없음)
+   - 기능: ① 빠른 판단 ② 대기함 ③ 참은 돈 + 이번 주 지출
+   ========================================================= */
+const VERSION = '0.4.0';
+const KEY = 'jamkkan.v1';
+const HOUR = 3600e3;
+const DAY = 24 * HOUR;
+const WEEKS_PER_MONTH = 365 / 7 / 12; // 약 4.345
+
+/* 판단 카테고리: 카테고리마다 질문·대기 시간·문구가 다름 (fail=왼쪽, pass=오른쪽)
+   질문 문구 안의 {시간} → 가격을 일한 시간으로, {남은돈} → 사고 난 뒤 이번 주 남는 돈 */
+const JCATS = {
+  food: {
+    emoji: '🍗', label: '음식', short: '음식', sub: '배달·포장·외식', ask: '뭘 먹으려고 해요?', ph: '예) 치킨',
+    chips: [5000, 10000, 20000], wait: 30, waitOpts: [15, 30, 60],
+    want: '먹고 싶어?', yes: '먹을래', no: '안 먹을래', ok: '먹어도 괜찮아요',
+    rec: '주문 기록하기', recToast: '주문을 기록했어요 · 이번 주 지출에도 넣었어요',
+    tip: '물 한 잔 마시고, 그래도 먹고 싶으면 다시 열어 보세요',
+    weekly: 'delivery', // 음식은 산 순간 주간 지출(배달)에 함께 기록
+    q: [
+      { text: '지금 진짜 배고파?',              fail: '입이 심심해', pass: '배고파' },
+      { text: '집에 대신 먹을 거 있어?',         fail: '있다',       pass: '없다' },
+      { text: '시키고 나면 {남은돈}. 괜찮아?',   fail: '안 괜찮아',  pass: '괜찮아' },
+    ],
+  },
+  goods: {
+    emoji: '🛍️', label: '물건', short: '물건', sub: '소품·옷·전자기기', ask: '뭘 사려고 해요?', ph: '예) 무선 이어폰',
+    chips: [10000, 50000, 100000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
+    want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
+    rec: '구매 기록하기', recToast: '구매를 기록했어요', tip: '',
+    q: [
+      { text: '할인·쿠폰 없어도 살까?',       fail: '아니', pass: '그래도 산다' },
+      { text: '비슷한 거 이미 있어?',         fail: '있다', pass: '없다' },
+      { text: '한 달 뒤에도 쓰고 있을까?',     fail: '글쎄', pass: '쓴다' },
+      { text: '{시간} 일할 만큼 가치 있어?',   fail: '아니', pass: '있다' },
+    ],
+  },
+  limited: {
+    emoji: '🎁', label: '굿즈·한정판', short: '굿즈', sub: '앨범·콜라보·한정 에디션', ask: '뭘 사려고 해요?', ph: '예) 콜라보 키링',
+    chips: [10000, 30000, 50000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
+    want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
+    rec: '구매 기록하기', recToast: '구매를 기록했어요',
+    tip: '놓칠까 봐 조급한 마음도 한정판이 노리는 거예요',
+    q: [
+      { text: '특전·한정 없어도 살까?',       fail: '아니', pass: '그래도 산다' },
+      { text: '비슷한 거 이미 있어?',         fail: '있다', pass: '없다' },
+      { text: '1년 뒤에도 좋아할까?',         fail: '글쎄', pass: '좋아해' },
+      { text: '{시간} 일할 만큼 가치 있어?',   fail: '아니', pass: '있다' },
+    ],
+  },
+  exp: {
+    emoji: '🎫', label: '경험·취미', short: '경험', sub: '공연·여행·강의·게임 결제', ask: '뭘 하려고 해요?', ph: '예) 콘서트 티켓',
+    chips: [10000, 50000, 100000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
+    want: '하고 싶어?', yes: '할래', no: '안 할래', ok: '해도 괜찮아요',
+    rec: '결제 기록하기', recToast: '결제를 기록했어요', tip: '',
+    q: [
+      { text: '마감·할인 아니어도 할 거야?',   fail: '아니',     pass: '그래도 해' },
+      { text: '실제로 시간 낼 수 있어?',       fail: '모르겠다', pass: '낼 수 있다' },
+      { text: '끝나고 잘 썼다고 할까?',        fail: '글쎄',     pass: '응' },
+      { text: '{시간} 일할 만큼 가치 있어?',   fail: '아니',     pass: '있다' },
+    ],
+  },
+};
+const JCAT_ORDER = ['food', 'goods', 'limited', 'exp'];
+const jcat = (k) => JCATS[k] || JCATS.goods;
+function defaultCats() {
+  const o = {};
+  for (const k of JCAT_ORDER) o[k] = { wait: JCATS[k].wait, q: JCATS[k].q.map((x) => ({ ...x })) };
+  return o;
+}
+function waitLabel(min) {
+  if (min < 60) return `${min}분`;
+  if (min % 1440 === 0) { const d = min / 1440; return d === 1 ? '하루' : d === 2 ? '이틀' : `${d}일`; }
+  return `${min / 60}시간`;
+}
+const catWait = (k) => (S.settings.cats[k] && S.settings.cats[k].wait) || jcat(k).wait;
+
+/* 입구: app/ = 본 앱, brake/ = 모드 및 루틴이 여는 전용 입구 (두 폴더의 index.html은 같은 파일) */
+// 실행 정보: 주소 뒤에 ?entry=brake&pkg=패키지명&label=앱이름 이 붙어 오면 그 앱 때문에 열린 것 (네이티브 앱이 넘겨줌)
+const LAUNCH = (() => {
+  try { const q = new URLSearchParams(location.search); return { entry: q.get('entry') || '', pkg: q.get('pkg') || '', label: q.get('label') || '' }; }
+  catch (_) { return { entry: '', pkg: '', label: '' }; }
+})();
+let ENTRY = (/\/brake(\/(index\.html)?)?$/.test(location.pathname) || LAUNCH.entry === 'brake') ? 'brake' : 'app';
+if (ENTRY === 'brake') document.title = '잠깐만 브레이크';
+
+/* ---------- 플랫폼 연결층 ----------
+   지금은 웹(PWA)으로 동작. 나중에 안드로이드 앱(WebView)이 window.JamkkanNative 를 넣어 주면
+   같은 코드가 네이티브 기능(설치된 앱 목록, 앱 실행 감지, 원래 앱으로 돌아가기, 권한)을 씀.
+   네이티브 쪽이 지켜야 할 규약은 docs/NATIVE.md. 모든 값은 JSON 문자열로 주고받음. */
+const NATIVE = (typeof window.JamkkanNative === 'object' && window.JamkkanNative) || null;
+const Platform = {
+  native: !!NATIVE,
+  call(name, ...args) {
+    try { return NATIVE && typeof NATIVE[name] === 'function' ? NATIVE[name](...args) : undefined; }
+    catch (_) { return undefined; }
+  },
+  json(name, ...args) {
+    const r = this.call(name, ...args);
+    if (r === undefined || r === null || r === '') return null;
+    try { return typeof r === 'string' ? JSON.parse(r) : r; } catch (_) { return null; }
+  },
+  installedApps() { const a = this.json('getInstalledApps'); return Array.isArray(a) ? a : null; }, // [{pkg,label}]
+  permissions() { return this.json('getPermissionState'); },                                         // {usage,overlay,notify}
+  openPermission(kind) { this.call('openPermissionSettings', kind); },
+  // 감시할 앱과 다시 묻지 않는 시간을 네이티브에 알려줌
+  syncWatch() {
+    if (!NATIVE) return;
+    const apps = (S.settings.apps || []).filter((a) => a.pkg).map((a) => ({ pkg: a.pkg, label: a.name }));
+    this.call('setWatchConfig', JSON.stringify({ apps, cooldownMin: S.settings.brakeCooldown || 10 }));
+  },
+  // 원래 앱(쇼핑·결제 앱)으로 돌아가기
+  leave() {
+    if (NATIVE && typeof NATIVE.returnToPreviousApp === 'function') { this.call('returnToPreviousApp'); return; }
+    try { window.close(); } catch (_) {}
+  },
+};
+// 한국어 조사: josa('쿠팡','이','가') → '이'
+function josa(word, withFinal, noFinal) {
+  const code = String(word || '').charCodeAt(String(word || '').length - 1) - 0xac00;
+  return code >= 0 && code <= 11171 && code % 28 ? withFinal : noFinal;
+}
+
+/* 연결 앱: 휴대폰 앱 목록은 웹앱이 읽을 수 없어서, 같은 앱을 '모드 및 루틴'에서도 골라야 함.
+   c = 그 앱에서 고르면 바로 이어질 판단 카테고리 ('' = 무엇을 살지 먼저 물어봄) */
+const APP_GROUPS = [
+  { g: 'shop', label: '쇼핑', emoji: '🛍️', apps: ['쿠팡', '11번가', 'G마켓', 'SSG닷컴', '무신사', '29CM', '지그재그', '에이블리', '올리브영', '오늘의집', '컬리', '알리익스프레스', '테무', '당근'].map((n) => ({ n, c: 'goods' })) },
+  { g: 'food', label: '배달', emoji: '🛵', apps: ['배달의민족', '쿠팡이츠', '요기요', '땡겨요'].map((n) => ({ n, c: 'food' })) },
+  { g: 'pay', label: '결제', emoji: '💳', apps: ['네이버페이', '카카오페이', '토스', '삼성 월렛', '페이코'].map((n) => ({ n, c: '' })) },
+  { g: 'fan', label: '굿즈·티켓', emoji: '🎫', apps: [{ n: '위버스', c: 'limited' }, { n: '인터파크 티켓', c: 'exp' }, { n: '멜론티켓', c: 'exp' }, { n: '티켓링크', c: 'exp' }] },
+];
+const GROUP_EMOJI = { shop: '🛍️', food: '🛵', pay: '💳', fan: '🎫' };
+const appEmoji = (a) => GROUP_EMOJI[a.g] || (a.cat && JCATS[a.cat] ? JCATS[a.cat].emoji : '📱');
+// 앱 이름으로 추천 목록의 그룹·카테고리 찾기 (네이티브에서 고른 앱에도 같은 기본값을 쓰기 위해)
+function presetOf(label) {
+  const n = String(label || '').replace(/\s/g, '');
+  for (const g of APP_GROUPS) for (const a of g.apps) if (a.n.replace(/\s/g, '') === n) return { g: g.g, c: a.c };
+  return null;
+}
+const COOLDOWN_OPTS = [5, 10, 30];
+const BRAKE_LOG_LABEL = {
+  open: '브레이크 열림', skip: '방금 넘겨서 바로 돌아감', loop: '반복 실행 감지',
+  leave: '그냥 둘러보기', away: '다른 앱으로 이동', judge: '판단 시작', decide: '판단 후 돌아감', again: '다시 판단하기',
+};
+
+const CATS = [
+  { id: 'cvs',      label: '편의점', emoji: '🏪' },
+  { id: 'cafe',     label: '카페',   emoji: '☕' },
+  { id: 'delivery', label: '배달',   emoji: '🛵' },
+  { id: 'etc',      label: '기타',   emoji: '🧾' },
+];
+const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const ICON = {
+  back:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  del:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>',
+};
+
+/* ---------- 유틸 ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const won = (n) => Math.round(n || 0).toLocaleString('ko-KR') + '원';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad2 = (n) => String(n).padStart(2, '0');
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (_) {} };
+
+function timeLabel(ts) {
+  return new Date(ts).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+}
+function whenLabel(ts) {
+  const d = new Date(ts); d.setHours(0, 0, 0, 0);
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const diff = Math.round((d - t) / DAY);
+  const tl = timeLabel(ts);
+  if (diff === 0) return '오늘 ' + tl;
+  if (diff === 1) return '내일 ' + tl;
+  if (diff === -1) return '어제 ' + tl;
+  const o = new Date(ts);
+  return `${o.getMonth() + 1}월 ${o.getDate()}일 ${tl}`;
+}
+function remainLabel(ms) {
+  if (ms <= 0) return '';
+  if (ms < HOUR) return `${Math.max(1, Math.ceil(ms / 60000))}분 남음`;
+  return `${Math.floor(ms / HOUR)}시간 남음`;
+}
+function durLabel(ms) {
+  if (ms < HOUR) return `${Math.max(1, Math.floor(ms / 60000))}분`;
+  const h = Math.floor(ms / HOUR);
+  if (h < 48) return `${h}시간`;
+  return `${Math.floor(h / 24)}일`;
+}
+
+/* ---------- 저장소 ---------- */
+function defaults() {
+  return {
+    v: 1,
+    settings: {
+      monthlyNet: 0, workHours: 40, commuteHours: 0,
+      weeklyLimit: 0, weekStart: 1,
+      cats: defaultCats(), // 카테고리별 {wait(분), q:[{text,fail,pass}]}
+      apps: [],            // 연결 앱 [{id,name,cat,g}]
+      brakeCooldown: 10,   // 브레이크를 넘긴 뒤 다시 묻지 않는 시간(분)
+      onboarded: false, startedAt: null,
+    },
+    brake: { lastPass: 0, loopUntil: 0, log: [] }, // 브레이크 실행 상태와 기록(최근 40개)
+    items: [],      // 판단한 것 {id,cat,name,price,at,status:'bought'|'waiting'|'passed',waited,waitUntil,decidedAt,failQ,answers,postponed}
+    spends: [],     // 소액 기록 {id,cat,amount,at,itemId?} — itemId가 있으면 음식 판단에서 자동 기록된 것
+    lastAmount: {}, // 카테고리별 마지막 금액
+    weekLimits: {}, // 주별 한도 스냅숏 {'YYYY-MM-DD': limit}
+  };
+}
+function migrate(d) {
+  const base = defaults();
+  if (!d || typeof d !== 'object') return base;
+  const oldSettings = d.settings || {};
+  d.settings = { ...base.settings, ...oldSettings };
+  // 카테고리별 기준 (v0.1의 단일 질문·waitHours는 물건 계열 대기 시간으로만 이어받음)
+  const cats = defaultCats();
+  const oc = oldSettings.cats || {};
+  for (const k of JCAT_ORDER) {
+    const o = oc[k];
+    if (o && Array.isArray(o.q) && o.q.length === JCATS[k].q.length) cats[k].q = o.q.map((x, i) => ({ ...JCATS[k].q[i], ...x }));
+    if (o && JCATS[k].waitOpts.includes(o.wait)) cats[k].wait = o.wait;
+  }
+  if (!oldSettings.cats && oldSettings.waitHours) {
+    const m = oldSettings.waitHours * 60;
+    for (const k of ['goods', 'limited', 'exp']) if (JCATS[k].waitOpts.includes(m)) cats[k].wait = m;
+  }
+  d.settings.cats = cats;
+  d.settings.apps = Array.isArray(d.settings.apps) ? d.settings.apps.filter((a) => a && a.name) : [];
+  if (!COOLDOWN_OPTS.includes(d.settings.brakeCooldown)) d.settings.brakeCooldown = 10;
+  d.brake = { ...base.brake, ...(d.brake || {}) };
+  if (!Array.isArray(d.brake.log)) d.brake.log = [];
+  delete d.settings.questions;
+  delete d.settings.waitHours;
+  d.items = Array.isArray(d.items) ? d.items : [];
+  d.items.forEach((it) => { if (!JCATS[it.cat]) it.cat = 'goods'; });
+  d.spends = Array.isArray(d.spends) ? d.spends : [];
+  d.lastAmount = d.lastAmount && typeof d.lastAmount === 'object' ? d.lastAmount : {};
+  d.weekLimits = d.weekLimits && typeof d.weekLimits === 'object' ? d.weekLimits : {};
+  d.v = 1;
+  return d;
+}
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (_) { return defaults(); }
+  if (!raw) return defaults();
+  try { return migrate(JSON.parse(raw)); }
+  catch (_) {
+    try { localStorage.setItem(KEY + '.broken.' + Date.now(), raw); } catch (__) {}
+    return defaults();
+  }
+}
+let S = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (_) { toast('저장하지 못했어요. 저장 공간을 확인해 주세요'); }
+}
+
+/* ---------- 계산 ---------- */
+function hourlyWage() {
+  const s = S.settings;
+  const h = (Number(s.workHours) || 0) + (Number(s.commuteHours) || 0);
+  if (!s.monthlyNet || h <= 0) return 0;
+  return s.monthlyNet / (h * WEEKS_PER_MONTH);
+}
+function workLabel(price) {
+  const hw = hourlyWage();
+  if (!hw || !price) return '';
+  const hrs = price / hw;
+  if (hrs < 1) return `약 ${Math.max(1, Math.round(hrs * 60))}분`;
+  const r = hrs < 10 ? Math.round(hrs * 10) / 10 : Math.round(hrs);
+  let out = `약 ${r}시간`;
+  const dayH = ((Number(S.settings.workHours) || 0) + (Number(S.settings.commuteHours) || 0)) / 5;
+  if (dayH > 0 && hrs >= dayH * 1.5) {
+    const days = hrs / dayH;
+    out += ` · 출근 ${days < 10 ? Math.round(days * 10) / 10 : Math.round(days)}일`;
+  }
+  return out;
+}
+const qCount = (cat) => jcat(cat).q.length;
+function qLabel(cat, i, k) {
+  const def = jcat(cat).q[i] || {};
+  const u = ((S.settings.cats[cat] || {}).q || [])[i] || {};
+  return String(u[k] || '').trim() || def[k] || '';
+}
+function questionText(cat, i, price) {
+  let t = qLabel(cat, i, 'text');
+  const w = workLabel(price);
+  const hours = w ? w.split(' · ')[0] : '';
+  if (t.includes('{남은돈}')) {
+    const lim = S.settings.weeklyLimit;
+    if (lim > 0) {
+      const { s, e } = thisWeek();
+      const rem = lim - sum(spendsBetween(s, e), 'amount') - price;
+      t = t.split('{남은돈}').join(rem >= 0 ? `이번 주 ${won(rem)} 남아` : `이번 주 한도를 ${won(-rem)} 넘어`);
+    } else {
+      return hours ? `${hours} 일한 돈 써도 괜찮아?` : '이 돈 써도 괜찮아?';
+    }
+  }
+  if (t.includes('{시간}')) {
+    if (!hours) return '이 가격만큼 가치 있어?';
+    t = t.split('{시간}').join(hours);
+  }
+  return t;
+}
+function weekStartOf(ts) {
+  const d = new Date(ts); d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() - S.settings.weekStart + 7) % 7));
+  return d;
+}
+const wkey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+function thisWeek() {
+  const s = weekStartOf(Date.now());
+  const e = new Date(s); e.setDate(e.getDate() + 7);
+  return { s, e };
+}
+function spendsBetween(s, e) { return S.spends.filter((x) => x.at >= +s && x.at < +e); }
+const sum = (arr, k) => arr.reduce((a, x) => a + (x[k] || 0), 0);
+function snapshotWeekLimit() {
+  const { s } = thisWeek();
+  if (S.settings.weeklyLimit > 0) S.weekLimits[wkey(s)] = S.settings.weeklyLimit;
+}
+function weekScore() {
+  const startTs = S.settings.startedAt;
+  if (!startTs) return { done: 0, ok: 0 };
+  const cur = weekStartOf(Date.now());
+  let done = 0, ok = 0;
+  for (let d = weekStartOf(startTs); d < cur; d.setDate(d.getDate() + 7)) {
+    const e = new Date(d); e.setDate(e.getDate() + 7);
+    const lim = S.weekLimits[wkey(d)] ?? S.settings.weeklyLimit;
+    if (!lim) continue;
+    done++;
+    if (sum(spendsBetween(d, e), 'amount') <= lim) ok++;
+  }
+  return { done, ok };
+}
+function waitScore() {
+  const w = S.items.filter((i) => i.waited);
+  const decided = w.filter((i) => i.status !== 'waiting');
+  return {
+    decided: decided.length,
+    skipped: decided.filter((i) => i.status === 'passed').length,
+    pending: w.length - decided.length,
+  };
+}
+const passedItems = () => S.items.filter((i) => i.status === 'passed');
+const waitingItems = () => S.items.filter((i) => i.status === 'waiting').sort((a, b) => a.waitUntil - b.waitUntil);
+const dueItems = () => waitingItems().filter((i) => i.waitUntil <= Date.now());
+const catOf = (id) => CATS.find((c) => c.id === id) || CATS[3];
+
+/* ---------- 레이어(페이지·시트) + 안드로이드 뒤로 가기 ---------- */
+const layers = [];
+let skipPop = false;
+const BR = { shown: false, mode: 'ask', title: '', src: LAUNCH.label || LAUNCH.pkg ? { pkg: LAUNCH.pkg, label: LAUNCH.label } : null }; // 브레이크 화면 상태 (레이어가 아니라 '바닥' 화면이라 뒤로 가기로 바로 원래 앱으로 감)
+const LAYER_EL = { judge: '#pg-judge', recheck: '#pg-recheck', settings: '#pg-settings', guide: '#pg-guide', sheet: '#sheet' };
+function syncInert() {
+  $('#app').inert = layers.length > 0 || BR.shown;
+  $('#pg-brake').inert = layers.length > 0;
+  for (const id of ['judge', 'recheck', 'settings', 'guide']) {
+    const top = layers[layers.length - 1];
+    $(LAYER_EL[id]).inert = layers.includes(id) && top !== id && !(top === 'sheet' && layers[layers.length - 2] === id);
+  }
+}
+function showLayer(id, on) {
+  $(LAYER_EL[id]).classList.toggle('open', on);
+  if (id === 'sheet') $('#dim').classList.toggle('open', on);
+  syncInert();
+  updateThemeColor();
+}
+function openLayer(id) {
+  if (!layers.includes(id)) layers.push(id);
+  showLayer(id, true);
+  if (!(history.state && history.state.g)) history.pushState({ g: 1 }, '');
+}
+function closeLayer(id) {
+  const i = layers.lastIndexOf(id);
+  if (i < 0) return;
+  layers.splice(i, 1);
+  showLayer(id, false);
+  if (!layers.length && history.state && history.state.g) { skipPop = true; history.back(); }
+}
+function handleBack() {
+  const top = layers[layers.length - 1];
+  if (top === 'sheet') closeSheet();
+  else if (top === 'judge') judgeBack();
+  else if (top === 'recheck') closeLayer('recheck');
+  else if (top === 'settings') settingsBack();
+  else if (top === 'guide') closeGuide();
+}
+window.addEventListener('popstate', () => {
+  if (skipPop) { skipPop = false; if (layers.length) history.pushState({ g: 1 }, ''); return; }
+  if (!layers.length) return;
+  handleBack();
+  if (layers.length) history.pushState({ g: 1 }, '');
+});
+function updateThemeColor() {
+  const pageOpen = layers.some((l) => l !== 'sheet') || BR.shown;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(pageOpen ? '--card' : '--bg').trim();
+  if (v) $('#themeColor').setAttribute('content', v);
+}
+
+/* ---------- 토스트 ---------- */
+let toastTimer = null, toastFn = null;
+function toast(msg, action) {
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button data-act="toastAct">${esc(action.label)}</button>` : '');
+  toastFn = action ? action.fn : null;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), action ? 4500 : 2800);
+}
+function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('show'); toastFn = null; }
+
+/* ---------- 홈 ---------- */
+const UI = { showSpends: false };
+function renderHome() {
+  const st = S.settings;
+  const { s, e } = thisWeek();
+  const week = spendsBetween(s, e).sort((a, b) => b.at - a.at);
+  const spent = sum(week, 'amount');
+  const lim = st.weeklyLimit;
+  const over = lim > 0 && spent > lim;
+  const pct = lim > 0 ? Math.min(100, (spent / lim) * 100) : 0;
+
+  // 0) 연결 안내 (본 앱에서만)
+  let connect = '';
+  if (ENTRY === 'app' && st.onboarded) {
+    if (!st.apps.length) {
+      connect = `<section class="card"><div class="sec-head"><h2>쇼핑앱을 열면 잠깐만이 먼저 켜지게</h2></div>
+        <div class="cap" style="margin-top:2px">결제·쇼핑·배달 앱과 연결해 두면 사기 직전에 한 번 더 물어봐요</div>
+        <button class="btn btn-weak" style="margin-top:16px;height:48px;border-radius:14px;font-size:16px" data-act="openGuide">앱과 연결하기</button></section>`;
+    } else if (!S.brake.log.length) {
+      connect = `<section class="card"><div class="sec-head"><h2>브레이크가 아직 한 번도 안 켜졌어요</h2></div>
+        <div class="cap" style="margin-top:2px">루틴 연결을 마무리하고, 연결한 앱을 열어 확인해 보세요</div>
+        <button class="btn btn-weak" style="margin-top:16px;height:48px;border-radius:14px;font-size:16px" data-act="openGuide">연결 확인하기</button></section>`;
+    }
+  }
+
+  // 1) 이번 주
+  let html = `<section class="card">
+    <div class="label">이번 주 남은 돈</div>`;
+  if (lim > 0) {
+    html += `<div class="big num ${over ? 'danger' : ''}">${over ? '−' + won(spent - lim) : won(lim - spent)}</div>
+      <div class="bar"><i class="${over ? 'over' : ''}" style="width:${pct}%"></i></div>
+      <div class="cap num">${won(lim)} 중 ${won(spent)} 썼어요 · ${DAYS[st.weekStart]}요일에 새로 시작</div>`;
+  } else {
+    html += `<div class="big dim">한도를 정해 주세요</div>
+      <div class="cap num">이번 주 ${won(spent)} 썼어요</div>
+      <button class="btn btn-weak" style="margin-top:16px;height:48px;border-radius:14px;font-size:16px" data-act="openSettings">주간 한도 정하기</button>`;
+  }
+  html += `<div class="quick">${CATS.map((c) => `<button class="qtile" data-act="quick" data-cat="${c.id}"><span class="emo">${c.emoji}</span><span class="lb">${c.label}</span></button>`).join('')}</div>`;
+  if (week.length) {
+    html += `<button class="more ${UI.showSpends ? 'open' : ''}" data-act="toggleSpends"><span>이번 주 기록 ${week.length}건</span>${ICON.right}</button>`;
+    if (UI.showSpends) {
+      html += `<div style="margin-top:4px">${week.map((x) => {
+        const c = catOf(x.cat);
+        return `<button class="row" data-act="spendItem" data-id="${x.id}"><span class="emo">${c.emoji}</span><span class="main"><span class="t" style="display:block">${c.label}</span><span class="s" style="display:block">${DAYS[new Date(x.at).getDay()]} ${timeLabel(x.at)}</span></span><span class="r num">${won(x.amount)}</span></button>`;
+      }).join('')}</div>`;
+    }
+  }
+  html += `</section>`;
+
+  html += connect;
+
+  // 2) 대기함
+  const waits = waitingItems();
+  html += `<section class="card">
+    <div class="sec-head"><h2>대기함</h2>${waits.length ? `<span class="cnt">${waits.length}</span>` : ''}</div>`;
+  if (!waits.length) html += `<div class="empty">기다리는 물건이 없어요</div>`;
+  else html += waits.map((it) => {
+    const left = it.waitUntil - Date.now();
+    const right = left <= 0 ? `<span class="due">지금 결정</span>` : `<span>${remainLabel(left)}</span>`;
+    return `<button class="row" data-act="waitItem" data-id="${it.id}"><span class="emo">${jcat(it.cat).emoji}</span><span class="main"><span class="t" style="display:block">${esc(it.name)}</span><span class="s num" style="display:block">${won(it.price)}${workLabel(it.price) ? ' · ' + workLabel(it.price).split(' · ')[0] : ''}</span></span><span class="r">${right}</span></button>`;
+  }).join('');
+  html += `</section>`;
+
+  // 3) 참은 돈
+  const passed = passedItems();
+  const saved = sum(passed, 'price');
+  const w = workLabel(saved);
+  html += `<section class="card">
+    <div class="label">지금까지 참은 돈</div>
+    <div class="big num ${saved ? 'blue' : 'dim'}">${won(saved)}</div>
+    <div class="cap">${passed.length ? `${passed.length}번 참았어요${w ? ' · ' + w.split(' · ')[0] + ' 일한 돈' : ''}` : '안 사기로 하면 여기에 쌓여요'}</div>
+  </section>`;
+
+  // 4) 성적 (M3 성공 기준 두 숫자)
+  const ws = waitScore(), wk = weekScore();
+  html += `<section class="card">
+    <div class="sec-head"><h2>잠깐만 성적</h2></div>
+    <div class="score"><div class="main"><div class="t">대기함에서 안 산 비율</div>
+      <div class="s">${ws.decided ? `결정한 ${ws.decided}개 중 ${ws.skipped}개를 안 샀어요` : '대기함에서 결정한 물건이 아직 없어요'}${ws.pending ? ` · 기다리는 중 ${ws.pending}개` : ''}</div></div>
+      <div class="v num ${ws.decided ? '' : 'dim'}">${ws.decided ? Math.round((ws.skipped / ws.decided) * 100) + '%' : '–'}</div></div>
+    <div class="score"><div class="main"><div class="t">주간 한도 지킨 주</div>
+      <div class="s">${wk.done ? `지난 ${wk.done}주 중 ${wk.ok}주를 지켰어요` : '첫 주가 끝나면 집계돼요'}</div></div>
+      <div class="v num ${wk.done ? '' : 'dim'}">${wk.done ? `${wk.ok}/${wk.done}` : '–'}</div></div>
+  </section>`;
+
+  // 5) 판단 기록
+  const recs = S.items.filter((i) => i.status !== 'waiting').sort((a, b) => (b.decidedAt || 0) - (a.decidedAt || 0)).slice(0, 8);
+  if (recs.length) {
+    html += `<section class="card"><div class="sec-head"><h2>판단 기록</h2></div>` +
+      recs.map((it) => `<button class="row" data-act="recItem" data-id="${it.id}"><span class="emo">${jcat(it.cat).emoji}</span><span class="main"><span class="t" style="display:block">${esc(it.name)}</span><span class="s" style="display:block">${whenLabel(it.decidedAt)}${it.src ? ' · ' + esc(it.src) : ''}${it.waited ? ' · 기다린 뒤' : ''}</span></span><span class="r num">${won(it.price)}<small>${it.status === 'passed' ? '<span class="badge green">참았어요</span>' : '<span class="badge grey">샀어요</span>'}</small></span></button>`).join('') +
+      `</section>`;
+  }
+  html += `<p class="foot">기록은 이 기기에만 저장돼요</p>`;
+  $('#home').innerHTML = html;
+}
+
+/* ---------- 키패드 ---------- */
+let PAD = null; // {obj, max, render}
+function keypadHTML() {
+  return `<div class="keypad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'].map((k) =>
+    `<button class="key num" data-act="key" data-k="${k}" aria-label="${k === 'del' ? '지우기' : k}">${k === 'del' ? ICON.del : k}</button>`).join('')}</div>`;
+}
+function pressKey(k) {
+  if (!PAD) return;
+  const o = PAD.obj, max = PAD.max;
+  if (k === 'del') { o.value = o.fresh ? 0 : Math.floor(o.value / 10); o.fresh = false; }
+  else if (k === 'clr') { o.value = 0; o.fresh = false; }
+  else {
+    const v = o.fresh ? 0 : o.value;
+    o.fresh = false;
+    const nv = k === '00' ? v * 100 : v * 10 + Number(k);
+    o.value = nv <= max ? nv : v;
+  }
+  PAD.render();
+}
+function addChip(n) {
+  if (!PAD) return;
+  PAD.obj.value = Math.min(PAD.max, PAD.obj.value + n);
+  PAD.obj.fresh = false;
+  PAD.render();
+}
+function amountHTML(o) {
+  return `<div class="amount num ${o.value ? '' : 'zero'} ${o.fresh && o.value ? 'fresh' : ''}"><span>${won(o.value)}</span></div>`;
+}
+// 지우기 길게 누르면 전체 삭제
+let delTimer = null;
+document.addEventListener('pointerdown', (e) => {
+  const k = e.target.closest('[data-k="del"]');
+  if (!k) return;
+  delTimer = setTimeout(() => { delTimer = 'fired'; pressKey('clr'); buzz(); }, 500);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => document.addEventListener(t, () => { if (delTimer && delTimer !== 'fired') clearTimeout(delTimer); }));
+
+/* ---------- 시트 ---------- */
+function openSheet(html) {
+  $('#sheet').innerHTML = `<div class="handle"></div>` + html;
+  openLayer('sheet');
+}
+function closeSheet() {
+  closeLayer('sheet');
+  PAD = (layers.includes('judge') && J && J.step === 'price') ? { obj: J.pad, max: 99999999, render: renderJudge } : null;
+}
+
+/* 소액 원탭 기록 */
+let Q = null;
+function openQuick(cat) {
+  const last = S.lastAmount[cat] || 0;
+  Q = { cat, obj: { value: last, fresh: !!last } };
+  PAD = { obj: Q.obj, max: 9999999, render: renderQuick };
+  openSheet('<div id="quickBody"></div>');
+  renderQuick();
+}
+function renderQuick() {
+  const c = catOf(Q.cat);
+  const lim = S.settings.weeklyLimit;
+  const { s, e } = thisWeek();
+  const left = lim - sum(spendsBetween(s, e), 'amount');
+  let cap = '';
+  if (lim > 0 && Q.obj.value) {
+    const after = left - Q.obj.value;
+    cap = after >= 0 ? `기록하면 이번 주 ${won(after)} 남아요` : `기록하면 이번 주 한도를 ${won(-after)} 넘어요`;
+  } else if (Q.obj.fresh && Q.obj.value) cap = '지난번 금액이에요. 다르면 숫자를 누르세요';
+  $('#quickBody').innerHTML = `
+    <div class="stitle">${c.emoji} ${c.label}에 얼마 썼어요?</div>
+    ${amountHTML(Q.obj)}
+    <div class="cap num" style="min-height:19.5px">${cap}</div>
+    <div class="chips">${[1000, 5000, 10000].map((v) => `<button class="chip num" data-act="chip" data-v="${v}">+${v >= 10000 ? v / 10000 + '만' : v / 1000 + '천'}</button>`).join('')}</div>
+    ${keypadHTML()}
+    <div style="margin-top:12px"><button class="btn btn-primary" data-act="qSave" ${Q.obj.value ? '' : 'disabled'}>기록하기</button></div>`;
+}
+function saveQuick() {
+  if (!Q || !Q.obj.value) return;
+  const rec = { id: uid(), cat: Q.cat, amount: Q.obj.value, at: Date.now() };
+  S.spends.push(rec);
+  S.lastAmount[Q.cat] = rec.amount;
+  save();
+  buzz();
+  closeSheet();
+  renderHome();
+  const c = catOf(rec.cat);
+  toast(`${c.label} ${won(rec.amount)} 기록했어요`, { label: '되돌리기', fn: () => removeSpend(rec.id) });
+}
+function removeSpend(id) {
+  S.spends = S.spends.filter((x) => x.id !== id);
+  save(); renderHome();
+}
+
+/* ---------- ① 빠른 판단 ---------- */
+let J = null;
+let ansLock = 0;
+// opts.cat: 카테고리를 미리 정해서 시작 (브레이크에서 앱을 고른 경우), opts.src: 어느 앱에서 왔는지
+function startJudge(opts) {
+  opts = opts || {};
+  const cat = opts.cat && JCATS[opts.cat] ? opts.cat : null;
+  J = { step: cat ? 'name' : 'cat', cat, src: opts.src || '', name: '', pad: { value: 0, fresh: false }, qi: 0, answers: [], failIdx: null, savedItem: null };
+  openLayer('judge');
+  renderJudge();
+  if (cat) focusName();
+}
+function judgeHeader(left, right) {
+  const btn = left === 'close'
+    ? `<button class="icon-btn" data-act="jClose" aria-label="닫기">${ICON.close}</button>`
+    : left === 'back' ? `<button class="icon-btn" data-act="jBack" aria-label="뒤로">${ICON.back}</button>` : '<span class="side"></span>';
+  return `<div class="phead">${btn}<span class="ttl"></span><span class="side num">${right || ''}</span></div>`;
+}
+function itemBox(name, price, cat) {
+  const w = workLabel(price);
+  return `<div class="jitem"><div class="n">${cat ? jcat(cat).emoji + ' ' : ''}${esc(name)}</div><div class="p"><b class="num">${won(price)}</b>${w ? `<span class="badge weak">${esc(w)} 일한 돈</span>` : ''}</div></div>`;
+}
+const chipLabel = (v) => '+' + (v >= 10000 ? v / 10000 + '만' : v / 1000 + '천');
+function renderJudge() {
+  const pg = $('#pg-judge');
+  const price = J.pad.value;
+  const C = J.cat ? jcat(J.cat) : null;
+  let h = '';
+  if (J.step === 'cat') {
+    PAD = null;
+    h = judgeHeader('close') + `<div class="pbody">
+        <h1 class="ptitle">뭐에 돈 쓰려고 해요?</h1>
+        <div class="psub">고르면 거기에 맞는 질문을 할게요</div>
+        <div class="cgrid">${JCAT_ORDER.map((k) => {
+          const c = JCATS[k];
+          return `<button class="ctile" data-act="jCat" data-cat="${k}"><span class="emo">${c.emoji}</span><span><b>${c.label}</b><small>${c.sub}</small></span></button>`;
+        }).join('')}</div>
+      </div>`;
+  } else if (J.step === 'name') {
+    PAD = null;
+    h = judgeHeader('back') + `<div class="pbody">
+        <span class="badge grey" style="align-self:flex-start">${J.src ? esc(J.src) + ' · ' : ''}${C.emoji} ${C.label}</span>
+        <h1 class="ptitle" style="margin-top:10px">${C.ask}</h1>
+        <input id="jName" class="hero-input" type="text" maxlength="40" placeholder="${esc(C.ph)}" value="${esc(J.name)}" enterkeyhint="next" autocomplete="off" aria-label="이름">
+      </div>
+      <div class="pfoot"><button class="btn btn-primary" id="jNameNext" data-act="jNameNext" ${J.name.trim() ? '' : 'disabled'}>다음</button></div>`;
+  } else if (J.step === 'price') {
+    PAD = { obj: J.pad, max: 99999999, render: renderJudge };
+    const w = workLabel(price);
+    h = judgeHeader('back') + `<div class="pbody">
+        <h1 class="ptitle">얼마예요?</h1>
+        <div class="psub">${C.emoji} ${esc(J.name)}</div>
+        ${amountHTML(J.pad)}
+        <div class="work">${w ? esc(w) + ' 일한 돈' : (hourlyWage() ? '' : '<span style="color:var(--muted);font-weight:500;font-size:14px">설정에서 실수령액을 넣으면 일한 시간으로 바꿔 보여줘요</span>')}</div>
+        <div class="spacer"></div>
+        <div class="chips">${C.chips.map((v) => `<button class="chip num" data-act="chip" data-v="${v}">${chipLabel(v)}</button>`).join('')}</div>
+        ${keypadHTML()}
+      </div>
+      <div class="pfoot" style="padding-top:4px"><button class="btn btn-primary" data-act="jPriceNext" ${price ? '' : 'disabled'}>다음</button></div>`;
+  } else if (J.step === 'q') {
+    PAD = null;
+    const i = J.qi, n = qCount(J.cat);
+    h = judgeHeader('back', `${i + 1}/${n}`) + `<div class="pbody">
+        ${itemBox(J.name, price, J.cat)}
+        <div class="steps">${Array.from({ length: n }, (_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="qwrap"><h1 class="qtitle">${esc(questionText(J.cat, i, price))}</h1></div>
+        <div class="spacer"></div>
+        <button class="tbtn" data-act="jGiveUp">이제 보니 ${C.no}</button>
+      </div>
+      <div class="pfoot" style="padding-top:4px"><div class="ans-row">
+        <button class="ans" data-act="jAns" data-pass="0">${esc(qLabel(J.cat, i, 'fail'))}</button>
+        <button class="ans" data-act="jAns" data-pass="1">${esc(qLabel(J.cat, i, 'pass'))}</button>
+      </div></div>`;
+  } else if (J.step === 'result') {
+    PAD = null;
+    if (J.failIdx === null) {
+      h = judgeHeader('back') + `<div class="pbody"><div class="result">
+          <div class="emo">✅</div>
+          <h1>${C.ok}</h1>
+          <p>질문 ${qCount(J.cat)}개를 모두 통과했어요${C.weekly ? '.<br>기록하면 이번 주 지출에도 들어가요' : ''}</p>
+          ${itemBox(J.name, price, J.cat)}
+        </div></div>
+        <div class="pfoot"><div class="btn-row">
+          <button class="btn btn-light" data-act="jPass">${C.no}</button>
+          <button class="btn btn-primary grow" data-act="jBuy">${C.rec}</button>
+        </div></div>`;
+    } else {
+      const wm = catWait(J.cat);
+      h = judgeHeader('back') + `<div class="pbody"><div class="result">
+          <div class="emo">⏳</div>
+          <h1>${waitLabel(wm)}만 기다려 봐요</h1>
+          <p>‘${esc(questionText(J.cat, J.failIdx, price))}’에서 걸렸어요.<br>${esc(whenLabel(Date.now() + wm * 60000))}에 다시 물어볼게요.</p>
+          ${itemBox(J.name, price, J.cat)}
+          ${C.tip ? `<div class="reason">${esc(C.tip)}</div>` : ''}
+        </div></div>
+        <div class="pfoot"><div class="btn-row">
+          <button class="btn btn-light" data-act="jPass">${C.no}</button>
+          <button class="btn btn-primary grow" data-act="jToWait">대기함에 넣기</button>
+        </div></div>`;
+    }
+  } else if (J.step === 'passed') {
+    PAD = null;
+    h = judgeHeader('none') + passedHTML(J.savedItem, 'jDone');
+  }
+  pg.innerHTML = `<div class="pin">${h}</div>`;
+}
+function passedHTML(it, act) {
+  const total = sum(passedItems(), 'price');
+  const w = workLabel(it.price);
+  return `<div class="pbody"><div class="result">
+      <div class="emo">🎉</div>
+      <h1 class="num">${won(it.price)} 아꼈어요</h1>
+      <p>${w ? esc(w.split(' · ')[0]) + ' 일한 돈을 지켰어요' : '잘 참았어요'}</p>
+      <div class="jitem" style="text-align:center"><div class="n" style="color:var(--sub);font-weight:500">지금까지 참은 돈</div><div style="font-size:24px;font-weight:700;color:var(--primary);margin-top:2px" class="num">${won(total)}</div></div>
+    </div></div>
+    <div class="pfoot"><button class="btn btn-primary" data-act="${act}">확인</button></div>`;
+}
+function focusName() { const inp = $('#jName'); if (inp) inp.focus(); }
+function judgeBack() {
+  if (!J) return closeLayer('judge');
+  if (J.step === 'cat' || J.step === 'passed') return closeLayer('judge');
+  if (J.step === 'name') { J.step = 'cat'; document.activeElement && document.activeElement.blur(); renderJudge(); return; }
+  if (J.step === 'price') { J.step = 'name'; renderJudge(); return; }
+  if (J.step === 'q') {
+    if (J.qi === 0) J.step = 'price';
+    else { J.qi--; J.answers.pop(); }
+    renderJudge(); return;
+  }
+  if (J.step === 'result') {
+    J.answers.pop();
+    J.qi = J.answers.length;
+    J.failIdx = null;
+    J.step = 'q';
+    renderJudge();
+  }
+}
+function judgeAnswer(pass) {
+  const now = Date.now();
+  if (now - ansLock < 250) return;
+  ansLock = now;
+  buzz();
+  J.answers.push(pass);
+  if (!pass) { J.failIdx = J.qi; J.step = 'result'; }
+  else if (J.qi < qCount(J.cat) - 1) J.qi++;
+  else { J.failIdx = null; J.step = 'result'; }
+  renderJudge();
+}
+// 음식처럼 주간 지출에 들어가는 카테고리는 산 순간 소액 기록에도 함께 넣음
+function recordWeekly(it) {
+  const w = jcat(it.cat).weekly;
+  if (!w) return;
+  S.spends = S.spends.filter((x) => x.itemId !== it.id);
+  S.spends.push({ id: uid(), cat: w, amount: it.price, at: Date.now(), itemId: it.id });
+}
+function addItem(status) {
+  const now = Date.now();
+  const it = {
+    id: uid(), cat: J.cat, src: J.src || '', name: J.name.trim(), price: J.pad.value, at: now, status,
+    waited: status === 'waiting',
+    waitUntil: status === 'waiting' ? now + catWait(J.cat) * 60000 : null,
+    decidedAt: status === 'waiting' ? null : now,
+    failQ: J.failIdx, answers: J.answers.slice(), postponed: 0,
+  };
+  S.items.push(it);
+  if (status === 'bought') recordWeekly(it);
+  save();
+  return it;
+}
+
+/* ---------- ② 대기함 다시 묻기 ---------- */
+let R = null;
+let recheckDismissed = false;
+function openRecheck(id) {
+  R = { id, step: 'ask' };
+  openLayer('recheck');
+  renderRecheck();
+}
+function renderRecheck() {
+  const it = S.items.find((x) => x.id === R.id);
+  if (!it) { closeLayer('recheck'); return; }
+  const C = jcat(it.cat);
+  const pg = $('#pg-recheck');
+  const head = `<div class="phead"><button class="icon-btn" data-act="rClose" aria-label="나중에">${ICON.close}</button><span class="ttl"></span><span class="side"></span></div>`;
+  if (R.step === 'passed') {
+    const due = dueItems();
+    pg.innerHTML = `<div class="pin">${head}${passedHTML(it, due.length ? 'rNext' : 'rClose')}</div>`;
+    return;
+  }
+  const reason = it.failQ !== null && it.failQ !== undefined ? `‘${questionText(it.cat, it.failQ, it.price)}’에서 걸렸었어요` : '';
+  pg.innerHTML = `<div class="pin">${head}<div class="pbody">
+      <span class="badge weak" style="align-self:flex-start">${durLabel(Date.now() - it.at)} 기다렸어요</span>
+      <h1 class="qtitle" style="margin-top:12px">아직도 ${C.want}</h1>
+      <div style="margin-top:24px">${itemBox(it.name, it.price, it.cat)}</div>
+      ${reason ? `<div class="reason">${esc(reason)}</div>` : ''}
+      <div class="spacer"></div>
+      <button class="tbtn" data-act="rLater">${waitLabel(catWait(it.cat))} 더 기다릴래</button>
+    </div>
+    <div class="pfoot" style="padding-top:4px"><div class="ans-row">
+      <button class="ans" data-act="rNo">${C.no}</button>
+      <button class="ans" data-act="rYes">${C.yes}</button>
+    </div></div></div>`;
+}
+function recheckNext() {
+  const due = dueItems();
+  if (due.length) { R = { id: due[0].id, step: 'ask' }; renderRecheck(); }
+  else closeLayer('recheck');
+}
+function maybeRecheck() {
+  if (layers.length || recheckDismissed || !S.settings.onboarded) return;
+  const due = dueItems();
+  if (due.length) openRecheck(due[0].id);
+}
+
+/* ---------- ④ 브레이크 (모드 및 루틴이 여는 입구) ---------- */
+const cooldownMs = () => (S.settings.brakeCooldown || 10) * 60000;
+function brakeLog(k) {
+  S.brake.log.unshift({ t: Date.now(), k });
+  S.brake.log = S.brake.log.slice(0, 40);
+  save();
+}
+function showBrake(mode, title) {
+  BR.shown = true; BR.mode = mode; BR.title = title || '';
+  renderBrake();
+  $('#pg-brake').classList.add('open');
+  syncInert(); updateThemeColor();
+}
+function hideBrake() {
+  BR.shown = false;
+  $('#pg-brake').classList.remove('open');
+  syncInert(); updateThemeColor();
+}
+// 원래 앱(쇼핑·결제 앱)으로 돌아가기. 막히면 화면 안내대로 뒤로 가기를 누르면 됨
+function closeApp() {
+  setTimeout(() => Platform.leave(), 700);
+}
+// 브레이크를 띄운 앱(알 수 있을 때)과 연결 앱 목록의 항목을 맞춰 봄
+function srcApp() {
+  if (!BR.src) return null;
+  const apps = S.settings.apps || [];
+  return apps.find((a) => (BR.src.pkg && a.pkg === BR.src.pkg)) || apps.find((a) => BR.src.label && a.name === BR.src.label) || null;
+}
+function renderBrake() {
+  const pg = $('#pg-brake');
+  const st = S.settings;
+  const cdMin = st.brakeCooldown || 10;
+  const xBtn = `<button class="icon-btn" data-act="brakeLeave" aria-label="닫기">${ICON.close}</button>`;
+  let h = '';
+  if (BR.mode === 'ask') {
+    const { s, e } = thisWeek();
+    const lim = st.weeklyLimit;
+    const left = lim - sum(spendsBetween(s, e), 'amount');
+    const saved = sum(passedItems(), 'price');
+    const apps = st.apps || [];
+    // 어느 앱 때문에 열렸는지 알면(네이티브) 그 앱 이름으로 안내하고 바로 판단으로 잇기
+    const srcLabel = BR.src ? (BR.src.label || (srcApp() || {}).name || '') : '';
+    const known = !!srcLabel;
+    h = `<div class="phead">${xBtn}<span class="ttl"></span><span class="side"></span></div>
+      <div class="pbody">
+        <span class="blabel">${known ? `${esc(srcLabel)}${josa(srcLabel, '이', '가')} 열려서 잠깐만이 켜졌어요` : '연결한 앱이 열려서 잠깐만이 켜졌어요'}</span>
+        <h1 class="ptitle" style="margin-top:12px">잠깐만,<br>정말 필요한 거예요?</h1>
+        <div class="bstats">
+          <div><span>이번 주 남은 돈</span><b class="num ${lim > 0 && left < 0 ? 'neg' : ''}">${lim > 0 ? (left < 0 ? '−' + won(-left) : won(left)) : '–'}</b></div>
+          <div><span>지금까지 참은 돈</span><b class="num">${won(saved)}</b></div>
+        </div>
+        ${known ? '' : apps.length ? `<div class="group" style="margin-top:28px">어디서 쓰려고 해요?</div>
+          <div class="appgrid">${apps.map((a) => `<button class="appchip" data-act="brakeApp" data-id="${esc(a.id)}"><span class="emo">${appEmoji(a)}</span><span class="nm">${esc(a.name)}</span></button>`).join('')}
+            <button class="appchip" data-act="brakeApp" data-id=""><span class="emo">➕</span><span class="nm">다른 곳</span></button></div>` : ''}
+        <div class="spacer"></div>
+        <button class="tbtn" data-act="brakeHome">기록 보기</button>
+      </div>
+      <div class="pfoot">
+        ${known ? `<button class="btn btn-primary" style="margin-bottom:8px" data-act="brakeSrc">${esc(srcLabel)}에서 쓰려는 게 있어요</button>`
+          : apps.length ? '' : `<button class="btn btn-primary" style="margin-bottom:8px" data-act="brakeApp" data-id="">사려는 게 있어요</button>`}
+        <button class="btn btn-light" data-act="brakeLeave">그냥 둘러보는 중이에요</button>
+        <div class="bnote">넘기면 ${cdMin}분 동안은 다시 묻지 않아요</div>
+      </div>`;
+  } else if (BR.mode === 'skip') {
+    h = `<div class="phead"><span class="side"></span><span class="ttl"></span><span class="side"></span></div>
+      <div class="bcenter"><div class="emo">👌</div><h1>방금 확인했어요</h1>
+        <p>${cdMin}분 안에 다시 열려서 바로 돌아갈게요</p>
+        <div class="hint">안 돌아가면 뒤로 가기를 눌러 주세요</div></div>
+      <div class="pfoot"><button class="btn btn-light" data-act="brakeAgain">그래도 판단할래요</button></div>`;
+  } else if (BR.mode === 'closed') {
+    h = `<div class="phead"><span class="side"></span><span class="ttl"></span><span class="side"></span></div>
+      <div class="bcenter"><div class="emo">👋</div><h1>${esc(BR.title || '넘어갈게요')}</h1>
+        <p>${cdMin}분 동안은 다시 묻지 않아요</p>
+        <div class="hint">원래 앱으로 안 돌아가면 뒤로 가기를 눌러 주세요</div></div>
+      <div class="pfoot"><button class="btn btn-light" data-act="brakeAgain">다시 판단하기</button></div>`;
+  } else if (BR.mode === 'loop') {
+    h = `<div class="phead"><span class="side"></span><span class="ttl"></span><span class="side"></span></div>
+      <div class="bcenter"><div class="emo">🔁</div><h1>루틴이 계속 다시 켜지고 있어요</h1>
+        <p>원래 앱으로 돌아갈 때마다 루틴이 다시 실행돼서 잠깐만이 반복해서 열려요.</p>
+        <div class="hint">모드 및 루틴에서 이 루틴을 잠시 꺼 주세요. 실행 기록은 잠깐만 앱의 ‘앱과 연결하기’에서 볼 수 있어요.</div></div>
+      <div class="pfoot"><button class="btn btn-light" data-act="brakeAgain">판단하러 가기</button></div>`;
+  }
+  pg.innerHTML = `<div class="pin">${h}</div>`;
+}
+// 브레이크 입구가 열리거나 다시 앞으로 올 때
+function onBrakeOpen() {
+  if (ENTRY !== 'brake' || layers.length) return; // 판단 중이면 그대로 둠
+  const now = Date.now();
+  // 웹(루틴)일 때만: 다시 묻지 않는 시간·반복 실행 감지. 네이티브는 앱마다 따로 이 규칙을 지킴(docs/NATIVE.md)
+  if (!Platform.native && S.brake.loopUntil && now < S.brake.loopUntil) { showBrake('loop'); return; }
+  if (!Platform.native && S.brake.lastPass && now - S.brake.lastPass < cooldownMs()) {
+    // 다른 일 없이 '바로 넘김'만 1분 안에 연달아 쌓이면 루틴이 반복 실행되는 것으로 봄
+    let recentSkips = 0;
+    for (const x of S.brake.log) { if (x.k !== 'skip' || now - x.t > 60000) break; recentSkips++; }
+    if (recentSkips >= 2) { // 세 번째로 되돌아옴 → 멈추고 안내
+      S.brake.loopUntil = now + cooldownMs();
+      brakeLog('loop');
+      showBrake('loop');
+      return;
+    }
+    brakeLog('skip');
+    showBrake('skip');
+    closeApp();
+    return;
+  }
+  brakeLog('open');
+  showBrake('ask');
+  maybeRecheck();
+}
+function brakeFinish(title) {
+  if (ENTRY !== 'brake') return;
+  S.brake.lastPass = Date.now();
+  brakeLog('decide');
+  showBrake('closed', title);
+  closeApp();
+}
+
+/* ---------- 연결 앱 고르기 ---------- */
+const NEWAPP = { name: '', cat: '' };
+let APPSEARCH = '';
+let INSTALLED = null; // 네이티브가 준 설치된 앱 목록 (웹에서는 null)
+function openAppPicker() {
+  INSTALLED = Platform.native ? Platform.installedApps() : null;
+  APPSEARCH = '';
+  openSheet('<div id="appPick"></div>');
+  renderAppPicker();
+}
+// 네이티브: 휴대폰에 설치된 앱 목록에서 고르기 (추천 목록에 있는 앱이 먼저)
+function installedListHTML() {
+  const selPkg = new Set(S.settings.apps.filter((a) => a.pkg).map((a) => a.pkg));
+  const q = APPSEARCH.trim().replace(/\s/g, '').toLowerCase();
+  const list = INSTALLED
+    .filter((a) => a && a.pkg && a.label)
+    .filter((a) => !q || a.label.replace(/\s/g, '').toLowerCase().includes(q))
+    .sort((x, y) => (presetOf(y.label) ? 1 : 0) - (presetOf(x.label) ? 1 : 0) || x.label.localeCompare(y.label, 'ko'));
+  return list.map((a) => `<button class="pick ${selPkg.has(a.pkg) ? 'on' : ''}" data-act="appToggle" data-pkg="${esc(a.pkg)}" data-n="${esc(a.label)}">${esc(a.label)}</button>`).join('') || '<div class="empty">찾는 앱이 없어요</div>';
+}
+function renderInstalledPicker() {
+  const apps = S.settings.apps;
+  const selPkg = new Set(apps.filter((a) => a.pkg).map((a) => a.pkg));
+  const chosen = INSTALLED.filter((a) => a && selPkg.has(a.pkg));
+  return `<div class="stitle">연결할 앱 고르기</div>
+    <div class="sdesc">휴대폰에 설치된 앱이에요. 고른 앱이 켜지면 잠깐만이 먼저 켜져요</div>
+    ${chosen.length ? `<div class="group">고른 앱 ${chosen.length}개</div><div class="pickgrid">${chosen.map((a) => `<button class="pick on" data-act="appToggle" data-pkg="${esc(a.pkg)}" data-n="${esc(a.label)}">${esc(a.label)} ✕</button>`).join('')}</div>` : ''}
+    <div class="inbox" style="margin-top:20px"><input id="appSearch" type="text" placeholder="앱 이름 검색" value="${esc(APPSEARCH)}" autocomplete="off" aria-label="앱 검색"></div>
+    <div class="pickgrid" id="installedList" style="margin-top:12px">${installedListHTML()}</div>
+    <div style="position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--sheet);padding:12px 0 0;margin-top:16px">
+      <button class="btn btn-primary" data-act="appPickDone">${apps.length ? `${apps.length}개 연결하기` : '닫기'}</button></div>`;
+}
+function renderAppPicker() {
+  const box = $('#appPick');
+  if (!box) return;
+  const sheet = $('#sheet');
+  const keep = sheet.scrollTop;
+  if (INSTALLED) {
+    box.innerHTML = renderInstalledPicker();
+    sheet.scrollTop = keep;
+    return;
+  }
+  const apps = S.settings.apps;
+  const sel = new Set(apps.map((a) => a.name));
+  const custom = apps.filter((a) => a.g === 'custom');
+  const catOpts = [['', '물어보기'], ...JCAT_ORDER.map((k) => [k, JCATS[k].short])];
+  box.innerHTML = `<div class="stitle">연결할 앱 고르기</div>
+    <div class="sdesc">고른 앱은 브레이크 화면에 나오고, 누르면 그 앱에 맞는 질문으로 바로 이어져요</div>
+    ${APP_GROUPS.map((g) => `<div class="group">${g.emoji} ${g.label}${g.g === 'pay' ? ' · 무엇을 살지 먼저 물어봐요' : ''}</div>
+      <div class="pickgrid">${g.apps.map((a) => `<button class="pick ${sel.has(a.n) ? 'on' : ''}" data-act="appToggle" data-g="${g.g}" data-n="${esc(a.n)}" data-c="${a.c}">${esc(a.n)}</button>`).join('')}</div>`).join('')}
+    <div class="group">📱 직접 추가</div>
+    ${custom.length ? `<div class="pickgrid" style="margin-bottom:10px">${custom.map((a) => `<button class="pick on" data-act="appToggle" data-g="custom" data-n="${esc(a.name)}" data-c="${a.cat}">${esc(a.name)} ✕</button>`).join('')}</div>` : ''}
+    <div class="inbox"><input id="newApp" type="text" maxlength="20" placeholder="앱 이름 (예: 번개장터)" value="${esc(NEWAPP.name)}" autocomplete="off" aria-label="추가할 앱 이름"></div>
+    <div class="flabel" style="margin-top:10px">이 앱에서 고르면</div>
+    <div class="seg">${catOpts.map(([k, l]) => `<button class="${NEWAPP.cat === k ? 'on' : ''}" data-act="newAppCat" data-v="${k}">${l}</button>`).join('')}</div>
+    <button class="btn btn-weak" style="margin-top:10px;height:48px;border-radius:14px;font-size:16px" data-act="appAdd">추가하기</button>
+    <div style="position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--sheet);padding:12px 0 0;margin-top:16px">
+      <button class="btn btn-primary" data-act="appPickDone">${apps.length ? `${apps.length}개 연결하기` : '닫기'}</button></div>`;
+  sheet.scrollTop = keep;
+}
+function appsChanged() {
+  save();
+  Platform.syncWatch();
+  renderAppPicker();
+  renderHome();
+  if (layers.includes('guide')) renderGuide();
+  if (layers.includes('settings')) renderSettings();
+}
+
+/* ---------- 앱과 연결하기 (루틴 가이드) ---------- */
+function openGuide() {
+  openLayer('guide');
+  renderGuide();
+}
+function closeGuide() {
+  closeLayer('guide');
+  renderHome();
+  if (layers.includes('settings')) renderSettings();
+}
+function brakeUrl() {
+  try { return new URL(ENTRY === 'brake' ? './' : '../brake/', location.href).href; } catch (_) { return '../brake/'; }
+}
+// 네이티브 앱일 때: 루틴 대신 권한 허용
+const PERM_INFO = [
+  ['usage', '사용 정보 접근', '지금 어떤 앱이 켜졌는지 알기 위해 필요해요'],
+  ['overlay', '다른 앱 위에 표시', '쇼핑앱 위로 잠깐만을 띄우기 위해 필요해요'],
+  ['notify', '알림', '앱 감지가 계속 돌아가는 걸 알려 주는 알림이에요'],
+];
+function nativeGuideSteps() {
+  const perm = Platform.permissions() || {};
+  const allOk = PERM_INFO.every(([k]) => perm[k]);
+  return `
+      <div class="gstep"><div class="n ${allOk ? 'done' : ''}">${allOk ? '✓' : '2'}</div><div class="c">
+        <h3>권한 허용하기</h3>
+        <p>한 번만 허용하면 루틴 없이 잠깐만이 직접 알아채요.</p>
+        ${PERM_INFO.map(([k, name, why]) => `<div class="logrow" style="align-items:center"><span><b>${name}</b><br>${why}</span>${perm[k] ? '<span class="badge green" style="flex:none;white-space:nowrap">허용됨</span>' : `<button class="tbtn" style="margin:0;flex:none;white-space:nowrap;color:var(--primary)" data-act="openPerm" data-k="${k}">허용하기</button>`}</div>`).join('')}
+      </div></div>
+`;
+}
+function renderGuide() {
+  const pg = $('#pg-guide');
+  const prev = $('#pg-guide .pbody');
+  const keep = prev ? prev.scrollTop : 0;
+  const apps = S.settings.apps;
+  const log = S.brake.log.slice(0, 15);
+  const opened = S.brake.log.some((x) => x.k === 'open' || x.k === 'skip');
+  const names = apps.map((a) => a.name);
+  const h = `<div class="phead"><button class="icon-btn" data-act="guideBack" aria-label="뒤로">${ICON.back}</button><span class="ttl">앱과 연결하기</span><span class="side"></span></div>
+    <div class="pbody">
+      <h1 class="ptitle">쇼핑앱이 켜질 때<br>잠깐만이 먼저 켜지게</h1>
+      <div class="psub">${Platform.native ? '고른 앱이 켜지면 잠깐만 앱이 알아채고 먼저 켜져요' : '웹앱은 휴대폰 앱 목록을 직접 볼 수 없어서, 앱이 켜지는 건 갤럭시 ‘모드 및 루틴’이 알려줘요'}</div>
+
+      <div class="gstep"><div class="n ${apps.length ? 'done' : ''}">${apps.length ? '✓' : '1'}</div><div class="c">
+        <h3>연결할 앱 고르기</h3>
+        <p>브레이크 화면에 나올 앱이에요. 결제 앱처럼 쇼핑앱이 아니어도 괜찮아요.</p>
+        ${apps.length ? `<div class="tags">${apps.map((a) => `<span class="tag">${appEmoji(a)} ${esc(a.name)}</span>`).join('')}</div>` : ''}
+        <button class="btn btn-weak" data-act="openAppPicker">${apps.length ? '앱 바꾸기' : '앱 고르기'}</button>
+      </div></div>
+${Platform.native ? nativeGuideSteps() : `
+      <div class="gstep"><div class="n">2</div><div class="c">
+        <h3>잠깐만 브레이크 설치하기</h3>
+        <p>루틴이 열어 줄 전용 앱이에요. 크롬에서 아래 주소를 열고 ⋮ 메뉴 → <b>앱 설치</b>를 눌러요.</p>
+        <div class="urlbox">${esc(brakeUrl())}</div>
+        <button class="btn btn-light" data-act="copyBrakeUrl">주소 복사</button>
+      </div></div>
+
+      <div class="gstep"><div class="n">3</div><div class="c">
+        <h3>모드 및 루틴에서 루틴 만들기</h3>
+        <ol>
+          <li><b>설정 → 모드 및 루틴 → 루틴</b> 탭에서 <b>+</b></li>
+          <li>조건(이 경우에) → <b>앱 열림</b> → ${names.length ? names.map((n) => `<b>${esc(n)}</b>`).join(', ') + ' 선택' : '1번에서 고른 앱 선택'}</li>
+          <li>동작(그러면) → <b>앱 열기</b> → <b>잠깐만 브레이크</b></li>
+          <li>저장하고 이름은 ‘잠깐만’으로</li>
+        </ol>
+        <p>메뉴 이름은 One UI 버전에 따라 조금 다를 수 있어요. 1번과 3번의 앱 목록이 같아야 해요.</p>
+      </div></div>
+`}
+      <div class="gstep"><div class="n ${opened ? 'done' : ''}">${opened ? '✓' : (Platform.native ? '3' : '4')}</div><div class="c">
+        <h3>잘 되는지 확인하기</h3>
+        <ol>
+          <li>연결한 앱을 열면 브레이크가 뜨나요?</li>
+          <li>‘그냥 둘러보는 중이에요’를 누르면 원래 앱으로 돌아가나요?</li>
+          <li>돌아간 뒤 브레이크가 또 뜨지는 않나요? 또 뜨면 아래 기록에 ‘방금 넘겨서 바로 돌아감’이 쌓여요.</li>
+        </ol>
+        <div style="margin-top:12px">${log.length ? log.map((x) => `<div class="logrow"><span>${esc(whenLabel(x.t))}</span><b>${esc(BRAKE_LOG_LABEL[x.k] || x.k)}</b></div>`).join('') : '<p>아직 브레이크가 켜진 기록이 없어요</p>'}</div>
+      </div></div>
+    </div>`;
+  pg.innerHTML = `<div class="pin">${h}</div>`;
+  const body = $('#pg-guide .pbody');
+  if (body && keep) body.scrollTop = keep;
+}
+
+/* ---------- 설정 ---------- */
+let settingsMode = 'normal';
+let settingsCat = 'food';
+function openSettings(mode) {
+  settingsMode = mode || 'normal';
+  $('#pg-settings').innerHTML = '';
+  openLayer('settings');
+  renderSettings();
+}
+function wageBoxHTML() {
+  const hw = hourlyWage();
+  const s = S.settings;
+  const h = (Number(s.workHours) || 0) + (Number(s.commuteHours) || 0);
+  if (!hw) return `<div class="wage"><div class="k">내 시급</div><div class="v">–</div><div class="f">실수령액과 근무시간을 넣으면 자동으로 계산돼요</div></div>`;
+  return `<div class="wage"><div class="k">내 시급 (자동 계산)</div><div class="v num">약 ${won(Math.round(hw))}</div>
+    <div class="f num">실수령액 ÷ 월 ${Math.round(h * WEEKS_PER_MONTH)}시간 (주 ${+h.toFixed(1)}시간 × 4.35주)</div></div>`;
+}
+function moneyField(key, label, help) {
+  const v = S.settings[key];
+  return `<div class="field"><label for="f-${key}">${label}</label>
+    <div class="inbox"><input id="f-${key}" class="num" type="text" inputmode="numeric" autocomplete="off" data-money="${key}" value="${v ? v.toLocaleString('ko-KR') : ''}" placeholder="0"><span class="unit">원</span></div>
+    ${help ? `<div class="help">${help}</div>` : ''}</div>`;
+}
+function hourField(key, label, help) {
+  const v = S.settings[key];
+  return `<div class="field"><label for="f-${key}">${label}</label>
+    <div class="inbox"><input id="f-${key}" class="num" type="text" inputmode="decimal" autocomplete="off" data-hours="${key}" value="${v || v === 0 ? v : ''}" placeholder="0"><span class="unit">시간</span></div>
+    ${help ? `<div class="help">${help}</div>` : ''}</div>`;
+}
+function catEditorHTML(k) {
+  const C = JCATS[k];
+  const cs = S.settings.cats[k];
+  return `<div class="help" style="margin-top:8px">${C.emoji} ${C.label} · ${C.sub}${C.weekly ? ' · 기록하면 이번 주 지출에도 들어가요' : ''}</div>
+    <div class="field"><span class="flabel">대기 시간</span>
+      <div class="seg">${C.waitOpts.map((v) => `<button class="${cs.wait === v ? 'on' : ''}" data-act="setWait" data-c="${k}" data-v="${v}">${waitLabel(v)}</button>`).join('')}</div>
+      <div class="help">질문에 하나라도 걸리면 이만큼 기다린 뒤 다시 물어봐요</div></div>
+    ${C.q.map((dq, i) => {
+      const q = cs.q[i] || {};
+      return `<div class="qedit">
+        <div class="qn">질문 ${i + 1}</div>
+        <div class="inbox"><input type="text" maxlength="40" data-c="${k}" data-q="${i}" data-k="text" value="${esc(q.text)}" placeholder="${esc(dq.text)}" aria-label="질문 ${i + 1}"></div>
+        <div class="two">
+          <div><span class="flabel">걸림 버튼 (왼쪽)</span><div class="inbox"><input type="text" maxlength="10" data-c="${k}" data-q="${i}" data-k="fail" value="${esc(q.fail)}" placeholder="${esc(dq.fail)}" aria-label="질문 ${i + 1} 걸림 버튼"></div></div>
+          <div><span class="flabel">통과 버튼 (오른쪽)</span><div class="inbox"><input type="text" maxlength="10" data-c="${k}" data-q="${i}" data-k="pass" value="${esc(q.pass)}" placeholder="${esc(dq.pass)}" aria-label="질문 ${i + 1} 통과 버튼"></div></div>
+        </div></div>`;
+    }).join('')}
+    <div class="help" style="margin-top:10px">질문에 {시간}을 넣으면 가격을 일한 시간으로, {남은돈}을 넣으면 사고 난 뒤 이번 주에 남는 돈으로 바꿔서 보여줘요</div>
+    <button class="tbtn" style="margin-top:8px" data-act="resetQ" data-c="${k}">${C.short} 질문 기본값으로 되돌리기</button>`;
+}
+function renderSettings() {
+  const s = S.settings;
+  const onb = settingsMode === 'onb';
+  const prevBody = $('#pg-settings .pbody');
+  const keepScroll = prevBody ? prevBody.scrollTop : 0;
+  let h = onb
+    ? `<div class="phead"><span class="side"></span><span class="ttl"></span><span class="side"></span></div>`
+    : `<div class="phead"><button class="icon-btn" data-act="sBack" aria-label="뒤로">${ICON.back}</button><span class="ttl">설정</span><span class="side"></span></div>`;
+  h += `<div class="pbody">`;
+  if (onb) h += `<h1 class="ptitle">시작하기 전에<br>두 가지만 정해요</h1><div class="psub">언제든 설정에서 바꿀 수 있어요</div>`;
+
+  h += `<div class="group">가격을 일한 시간으로 바꾸기</div>
+    ${moneyField('monthlyNet', '월 실수령액', '세금 떼고 통장에 들어오는 돈이에요. 성과급이 있으면 연간 실수령액 ÷ 12')}
+    <div style="display:flex;gap:8px">
+      <div style="flex:1;min-width:0">${hourField('workHours', '주 근무시간')}</div>
+      <div style="flex:1;min-width:0">${hourField('commuteHours', '주 통근시간')}</div>
+    </div>
+    <div class="help">통근시간까지 넣으면 그 돈을 벌려고 실제로 묶여 있는 시간이 기준이 돼요</div>
+    <div id="wageBox">${wageBoxHTML()}</div>`;
+
+  h += `<div class="group">주간 한도</div>
+    ${moneyField('weeklyLimit', '이번 주에 쓸 소액 지출 한도', '편의점·카페·배달·기타와, 판단해서 먹기로 한 음식이 들어가요. 최근 4~8주 평균보다 10~20% 낮게 잡는 걸 권해요')}`;
+
+  if (!onb) {
+    h += `<div class="field"><span class="flabel">한 주의 시작</span>
+      <div class="seg">${[1, 0].map((d) => `<button class="${s.weekStart === d ? 'on' : ''}" data-act="seg" data-k="weekStart" data-v="${d}">${DAYS[d]}요일</button>`).join('')}</div></div>`;
+    const apps = s.apps || [];
+    h += `<div class="group">${Platform.native ? '연결 앱' : '연결 앱 · 모드 및 루틴'}</div>
+      <button class="row" data-act="openGuide"><span class="emo">🔗</span><span class="main"><span class="t" style="display:block">앱과 연결하기</span>
+        <span class="s" style="display:block">${apps.length ? esc(apps.slice(0, 3).map((a) => a.name).join(', ')) + (apps.length > 3 ? ` 외 ${apps.length - 3}개` : '') : '아직 연결한 앱이 없어요'}</span></span>
+        <span class="r" style="color:var(--faint)">${ICON.right.replace('<svg', '<svg style="width:20px;height:20px"')}</span></button>
+      <div class="field"><span class="flabel">브레이크를 넘긴 뒤 다시 묻지 않는 시간</span>
+        <div class="seg">${COOLDOWN_OPTS.map((v) => `<button class="${s.brakeCooldown === v ? 'on' : ''}" data-act="seg" data-k="brakeCooldown" data-v="${v}">${v}분</button>`).join('')}</div>
+        <div class="help">쇼핑앱으로 돌아갈 때 브레이크가 또 뜨지 않게 하는 시간이에요</div></div>`;
+    h += `<div class="group">카테고리별 판단 기준</div>
+      <div class="seg">${JCAT_ORDER.map((k) => `<button class="${settingsCat === k ? 'on' : ''}" data-act="setCat" data-c="${k}">${JCATS[k].short}</button>`).join('')}</div>
+      ${catEditorHTML(settingsCat)}`;
+    h += `<div class="group">데이터</div>
+      <div class="help" style="margin-top:0">모든 기록은 이 휴대폰의 브라우저에만 저장돼요. 크롬에서 사이트 데이터를 지우면 함께 지워져요.</div>
+      <button class="btn btn-danger" style="margin-top:12px" data-act="resetAll">모든 기록 지우기</button>
+      <div class="ver">잠깐만 v${VERSION}</div>`;
+  }
+  h += `</div>`;
+  if (onb) h += `<div class="pfoot"><button class="btn btn-primary" data-act="onbDone">시작하기</button><button class="tbtn" style="margin-top:4px" data-act="onbDone">나중에 정할게요</button></div>`;
+  $('#pg-settings').innerHTML = `<div class="pin">${h}</div>`;
+  const body = $('#pg-settings .pbody');
+  if (body && keepScroll) body.scrollTop = keepScroll;
+}
+function settingsBack() {
+  if (settingsMode === 'onb') return finishOnboarding();
+  closeLayer('settings');
+  renderHome();
+}
+function finishOnboarding() {
+  S.settings.onboarded = true;
+  if (!S.settings.startedAt) S.settings.startedAt = Date.now();
+  snapshotWeekLimit();
+  save();
+  closeLayer('settings');
+  renderHome();
+  if (ENTRY === 'brake') onBrakeOpen();
+}
+// 설정 입력은 바로 저장
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.id === 'jName') {
+    J.name = el.value;
+    const b = $('#jNameNext');
+    if (b) b.disabled = !J.name.trim();
+    return;
+  }
+  if (el.id === 'newApp') { NEWAPP.name = el.value; return; }
+  if (el.id === 'appSearch') { APPSEARCH = el.value; const l = $('#installedList'); if (l) l.innerHTML = installedListHTML(); return; }
+  if (el.dataset.money) {
+    const digits = el.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 10);
+    const n = digits ? Number(digits) : 0;
+    el.value = digits ? n.toLocaleString('ko-KR') : '';
+    S.settings[el.dataset.money] = n;
+    if (el.dataset.money === 'weeklyLimit') snapshotWeekLimit();
+  } else if (el.dataset.hours) {
+    let v = el.value.replace(/[^\d.]/g, '');
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    if (v !== el.value) el.value = v;
+    const n = Math.min(168, parseFloat(v) || 0);
+    S.settings[el.dataset.hours] = n;
+  } else if (el.dataset.q !== undefined && el.dataset.c) {
+    const cs = S.settings.cats[el.dataset.c];
+    const i = Number(el.dataset.q);
+    if (!cs || !cs.q[i]) return;
+    cs.q[i][el.dataset.k] = el.value;
+  } else return;
+  save();
+  const wb = $('#wageBox');
+  if (wb) wb.innerHTML = wageBoxHTML();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'jName' && J && J.name.trim()) { e.preventDefault(); ACT.jNameNext(); }
+});
+
+/* ---------- 행동 ---------- */
+let toastAfterClose = null;
+const ACT = {
+  openSettings: () => openSettings('normal'),
+  startJudge: () => startJudge(),
+
+  // 연결 앱 · 가이드
+  openGuide: () => openGuide(),
+  guideBack: () => closeGuide(),
+  openAppPicker: () => openAppPicker(),
+  appPickDone: () => closeSheet(),
+  appToggle: (el) => {
+    const n = el.dataset.n;
+    const pkg = el.dataset.pkg || '';
+    const apps = S.settings.apps;
+    const i = apps.findIndex((a) => (pkg ? a.pkg === pkg : a.name === n));
+    if (i >= 0) apps.splice(i, 1);
+    else if (pkg) { // 네이티브: 휴대폰에 설치된 앱에서 고름
+      const p = presetOf(n);
+      apps.push({ id: uid(), name: n, pkg, cat: p ? p.c : '', g: p ? p.g : 'custom' });
+    } else apps.push({ id: uid(), name: n, cat: el.dataset.c || '', g: el.dataset.g });
+    appsChanged();
+  },
+  newAppCat: (el) => { NEWAPP.cat = el.dataset.v; renderAppPicker(); },
+  appAdd: () => {
+    const n = NEWAPP.name.trim();
+    if (!n) { toast('앱 이름을 적어 주세요'); return; }
+    if (S.settings.apps.some((a) => a.name === n)) { toast('이미 연결한 앱이에요'); return; }
+    S.settings.apps.push({ id: uid(), name: n, cat: NEWAPP.cat, g: 'custom' });
+    NEWAPP.name = ''; NEWAPP.cat = '';
+    appsChanged();
+    toast(`${n}${josa(n, '을', '를')} 추가했어요`);
+  },
+  openPerm: (el) => Platform.openPermission(el.dataset.k),
+  copyBrakeUrl: () => {
+    const url = brakeUrl();
+    const done = () => toast('주소를 복사했어요. 크롬 주소창에 붙여 넣어 주세요');
+    try { navigator.clipboard.writeText(url).then(done, () => toast('주소를 길게 눌러 복사해 주세요')); }
+    catch (_) { toast('주소를 길게 눌러 복사해 주세요'); }
+  },
+
+  // 브레이크
+  brakeApp: (el) => {
+    const a = S.settings.apps.find((x) => x.id === el.dataset.id);
+    brakeLog('judge');
+    startJudge({ cat: a ? a.cat : '', src: a ? a.name : '' });
+  },
+  brakeSrc: () => {
+    const a = srcApp();
+    const label = (BR.src && BR.src.label) || (a ? a.name : '');
+    const p = presetOf(label);
+    brakeLog('judge');
+    startJudge({ cat: a ? a.cat : (p ? p.c : ''), src: label });
+  },
+  brakeLeave: () => {
+    S.brake.lastPass = Date.now();
+    brakeLog('leave');
+    showBrake('closed', '넘어갈게요');
+    closeApp();
+  },
+  brakeHome: () => hideBrake(),
+  brakeAgain: () => { S.brake.lastPass = 0; S.brake.loopUntil = 0; brakeLog('again'); showBrake('ask'); },
+  quick: (el) => openQuick(el.dataset.cat),
+  key: (el) => pressKey(el.dataset.k),
+  chip: (el) => addChip(Number(el.dataset.v)),
+  qSave: saveQuick,
+  toggleSpends: () => { UI.showSpends = !UI.showSpends; renderHome(); },
+  dimClose: () => { if (layers[layers.length - 1] === 'sheet') closeSheet(); },
+  sheetClose: () => closeSheet(),
+  toastAct: () => { const f = toastFn; hideToast(); if (f) f(); },
+
+  spendItem: (el) => {
+    const x = S.spends.find((s) => s.id === el.dataset.id);
+    if (!x) return;
+    const c = catOf(x.cat);
+    openSheet(`<div class="stitle">${c.emoji} ${c.label} ${won(x.amount)}</div>
+      <div class="sdesc">${DAYS[new Date(x.at).getDay()]}요일 ${timeLabel(x.at)}에 기록했어요</div>
+      <div class="btn-col"><button class="btn btn-danger" data-act="delSpend" data-id="${x.id}">기록 삭제하기</button>
+      <button class="btn btn-light" data-act="sheetClose">닫기</button></div>`);
+  },
+  delSpend: (el) => {
+    const x = S.spends.find((s) => s.id === el.dataset.id);
+    if (!x) return;
+    S.spends = S.spends.filter((s) => s.id !== x.id);
+    save(); closeSheet(); renderHome();
+    toast('기록을 삭제했어요', { label: '되돌리기', fn: () => { S.spends.push(x); save(); renderHome(); } });
+  },
+
+  waitItem: (el) => {
+    const it = S.items.find((x) => x.id === el.dataset.id);
+    if (!it) return;
+    const left = it.waitUntil - Date.now();
+    if (left <= 0) { recheckDismissed = false; openRecheck(it.id); return; }
+    openSheet(`<div class="stitle">${esc(it.name)}</div>
+      <div class="sdesc num">${won(it.price)} · ${remainLabel(left)} (${esc(whenLabel(it.waitUntil))}에 다시 물어봐요)</div>
+      <div class="btn-col">
+        <button class="btn btn-primary" data-act="passNow" data-id="${it.id}">지금 안 사기로 할래요</button>
+        <button class="btn btn-light" data-act="sheetClose">계속 기다릴게요</button>
+        <button class="tbtn" style="color:var(--danger)" data-act="delItem" data-id="${it.id}">대기함에서 삭제</button>
+      </div>`);
+  },
+  passNow: (el) => {
+    const it = S.items.find((x) => x.id === el.dataset.id);
+    if (!it) return;
+    it.status = 'passed'; it.decidedAt = Date.now();
+    save(); closeSheet(); renderHome();
+    toast(`${won(it.price)} 아꼈어요`);
+  },
+  recItem: (el) => {
+    const it = S.items.find((x) => x.id === el.dataset.id);
+    if (!it) return;
+    openSheet(`<div class="stitle">${esc(it.name)}</div>
+      <div class="sdesc num">${won(it.price)} · ${it.status === 'passed' ? '참았어요' : '샀어요'} · ${esc(whenLabel(it.decidedAt))}</div>
+      <div class="btn-col"><button class="btn btn-danger" data-act="delItem" data-id="${it.id}">기록 삭제하기</button>
+      <button class="btn btn-light" data-act="sheetClose">닫기</button></div>`);
+  },
+  delItem: (el) => {
+    const idx = S.items.findIndex((x) => x.id === el.dataset.id);
+    if (idx < 0) return;
+    const [it] = S.items.splice(idx, 1);
+    const linked = S.spends.filter((x) => x.itemId === it.id); // 음식 판단에서 같이 들어간 주간 지출도 함께 삭제
+    S.spends = S.spends.filter((x) => x.itemId !== it.id);
+    save(); closeSheet(); renderHome();
+    toast('기록을 삭제했어요', { label: '되돌리기', fn: () => { S.items.splice(idx, 0, it); S.spends.push(...linked); save(); renderHome(); } });
+  },
+
+  // 판단
+  jClose: () => closeLayer('judge'),
+  jBack: () => judgeBack(),
+  jCat: (el) => {
+    if (!JCATS[el.dataset.cat]) return;
+    if (J.cat !== el.dataset.cat) { J.pad = { value: 0, fresh: false }; }
+    J.cat = el.dataset.cat;
+    J.step = 'name';
+    renderJudge();
+    focusName();
+  },
+  jNameNext: () => {
+    if (!J || !J.name.trim()) return;
+    J.step = 'price';
+    document.activeElement && document.activeElement.blur();
+    renderJudge();
+  },
+  jPriceNext: () => { if (J.pad.value) { J.step = 'q'; J.qi = 0; J.answers = []; renderJudge(); } },
+  jAns: (el) => judgeAnswer(el.dataset.pass === '1'),
+  jGiveUp: () => ACT.jPass(),
+  jPass: () => { J.savedItem = addItem('passed'); J.step = 'passed'; buzz(); renderJudge(); renderHome(); },
+  jBuy: () => {
+    addItem('bought'); closeLayer('judge'); renderHome();
+    if (ENTRY === 'brake') brakeFinish(jcat(J.cat).recToast.split(' · ')[0]);
+    else toast(jcat(J.cat).recToast);
+  },
+  jToWait: () => {
+    const it = addItem('waiting');
+    closeLayer('judge'); renderHome();
+    if (ENTRY === 'brake') brakeFinish(`${whenLabel(it.waitUntil)}에 다시 물어볼게요`);
+    else toast(`대기함에 넣었어요 · ${whenLabel(it.waitUntil)}에 다시 물어볼게요`);
+  },
+  jDone: () => {
+    closeLayer('judge');
+    if (ENTRY === 'brake') brakeFinish(`${won(J.savedItem ? J.savedItem.price : 0)} 아꼈어요`);
+  },
+
+  // 다시 묻기
+  rClose: () => { if (R && R.step === 'ask') recheckDismissed = true; closeLayer('recheck'); renderHome(); },
+  rNext: () => recheckNext(),
+  rNo: () => {
+    const it = S.items.find((x) => x.id === R.id);
+    if (!it) return;
+    it.status = 'passed'; it.decidedAt = Date.now();
+    save(); buzz(); renderHome();
+    R.step = 'passed'; renderRecheck();
+  },
+  rYes: () => {
+    const it = S.items.find((x) => x.id === R.id);
+    if (!it) return;
+    it.status = 'bought'; it.decidedAt = Date.now();
+    recordWeekly(it);
+    save(); renderHome();
+    toast(jcat(it.cat).recToast);
+    recheckNext();
+  },
+  rLater: () => {
+    const it = S.items.find((x) => x.id === R.id);
+    if (!it) return;
+    it.waitUntil = Date.now() + catWait(it.cat) * 60000; it.postponed = (it.postponed || 0) + 1;
+    save(); renderHome();
+    toast(`${whenLabel(it.waitUntil)}에 다시 물어볼게요`);
+    recheckNext();
+  },
+
+  // 설정
+  sBack: () => settingsBack(),
+  onbDone: () => finishOnboarding(),
+  seg: (el) => {
+    const k = el.dataset.k, v = Number(el.dataset.v);
+    S.settings[k] = v;
+    if (k === 'weekStart') snapshotWeekLimit();
+    if (k === 'brakeCooldown') Platform.syncWatch();
+    save(); renderSettings(); renderHome();
+  },
+  setCat: (el) => { if (JCATS[el.dataset.c]) { settingsCat = el.dataset.c; renderSettings(); } },
+  setWait: (el) => {
+    const k = el.dataset.c, v = Number(el.dataset.v);
+    if (!JCATS[k] || !JCATS[k].waitOpts.includes(v)) return;
+    S.settings.cats[k].wait = v;
+    save(); renderSettings();
+  },
+  resetQ: (el) => {
+    const k = el.dataset.c;
+    if (!JCATS[k]) return;
+    S.settings.cats[k].q = JCATS[k].q.map((q) => ({ ...q }));
+    save(); renderSettings();
+    toast(`${JCATS[k].short} 질문을 기본값으로 되돌렸어요`);
+  },
+  resetAll: () => {
+    openSheet(`<div class="stitle">모든 기록을 지울까요?</div>
+      <div class="sdesc">판단 기록, 소액 기록, 참은 돈, 설정이 모두 지워지고 되돌릴 수 없어요.</div>
+      <div class="btn-col"><button class="btn btn-danger" data-act="resetAllYes">모두 지우기</button>
+      <button class="btn btn-light" data-act="sheetClose">취소</button></div>`);
+  },
+  resetAllYes: () => {
+    try { localStorage.removeItem(KEY); } catch (_) {}
+    S = defaults();
+    closeLayer('sheet');
+    renderHome();
+    settingsMode = 'onb';
+    renderSettings();
+    toast('모든 기록을 지웠어요');
+  },
+};
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const f = ACT[el.dataset.act];
+  if (f) f(el, e);
+});
+
+/* ---------- 시작 ---------- */
+// 두 입구(app/brake)가 같은 저장소를 쓰므로, 앞으로 올 때마다 최신 데이터를 다시 읽음
+function onVisible() {
+  S = load();
+  renderHome();
+  if (BR.shown) renderBrake();
+  if (layers.includes('guide')) renderGuide();
+  // 네이티브 앱에서는 앞으로 오는 이유를 앱이 jamkkanLaunch()로 알려 주므로 여기서는 판단하지 않음
+  if (ENTRY === 'brake') { if (!Platform.native) onBrakeOpen(); }
+  else maybeRecheck();
+}
+// 네이티브 진입점: 앱이 이미 켜져 있을 때 감지된 앱 때문에 다시 앞으로 오면 호출됨
+// info = { entry: 'brake' | 'app', pkg: '패키지명', label: '앱 이름' } (객체 또는 JSON 문자열)
+window.jamkkanLaunch = function (info) {
+  try { info = typeof info === 'string' ? JSON.parse(info) : (info || {}); } catch (_) { info = {}; }
+  S = load();
+  if (info.entry === 'brake') {
+    ENTRY = 'brake';
+    document.title = '잠깐만 브레이크';
+    BR.src = info.pkg || info.label ? { pkg: info.pkg || '', label: info.label || '' } : null;
+    renderHome();
+    if (layers.includes('judge')) return; // 판단 도중이면 그대로 이어감
+    for (const l of layers.slice().reverse()) if (l !== 'judge') { layers.splice(layers.indexOf(l), 1); showLayer(l, false); }
+    onBrakeOpen();
+  } else {
+    ENTRY = 'app';
+    document.title = '잠깐만';
+    BR.src = null;
+    if (BR.shown) hideBrake();
+    renderHome();
+    maybeRecheck();
+  }
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    recheckDismissed = false;
+    // 브레이크 화면에서 그냥 다른 앱으로 가면(뒤로 가기·홈) '넘김'으로 보고 반복 실행을 막음
+    if (ENTRY === 'brake' && BR.shown && BR.mode === 'ask' && !layers.length) {
+      S.brake.lastPass = Date.now();
+      brakeLog('away');
+    }
+  } else onVisible();
+});
+window.addEventListener('storage', (e) => {
+  if (e.key !== KEY) return;
+  S = load();
+  renderHome();
+  if (BR.shown && BR.mode === 'ask') renderBrake();
+  if (layers.includes('guide')) renderGuide();
+});
+setInterval(() => { if (document.visibilityState === 'visible') renderHome(); }, 30000);
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeColor); } catch (_) {}
+
+function init() {
+  snapshotWeekLimit();
+  Platform.syncWatch();
+  renderHome();
+  updateThemeColor();
+  if (!S.settings.onboarded) openSettings('onb');
+  else if (ENTRY === 'brake') onBrakeOpen();
+  else maybeRecheck();
+}
+init();
+
+// 서비스 워커는 상위 폴더(/jamkkan/sw.js)에 하나만 두고 app·brake를 함께 관리
+// (네이티브 앱이 파일을 직접 넣어 둔 경우엔 서비스 워커가 필요 없음)
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !Platform.native) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {}); });
+}
+if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => {}); }
+</script>
+</body>
+</html>
