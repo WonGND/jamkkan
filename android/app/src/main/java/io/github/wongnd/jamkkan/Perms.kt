@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 
@@ -28,6 +29,12 @@ object Perms {
         return nm.areNotificationsEnabled()
     }
 
+    /** 배터리 사용 제한을 받지 않는지 (감지가 꺼지지 않게) */
+    fun hasBattery(c: Context): Boolean {
+        val pm = c.getSystemService(PowerManager::class.java) ?: return false
+        return pm.isIgnoringBatteryOptimizations(c.packageName)
+    }
+
     fun open(a: Activity, kind: String) {
         val pkgUri = Uri.parse("package:" + a.packageName)
         when (kind) {
@@ -41,6 +48,11 @@ object Perms {
                 if (!tryStart(a, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkgUri))) {
                     tryStart(a, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
                 }
+            }
+            "battery" -> {
+                @Suppress("BatteryLife")
+                val req = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri)
+                if (!tryStart(a, req)) tryStart(a, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
             "notify" -> {
                 val prefs = a.getSharedPreferences("perms", Context.MODE_PRIVATE)

@@ -38,12 +38,13 @@ class NativeBridge(private val activity: MainActivity) {
         activity.runOnUiThread { WatchService.sync(activity) }
     }
 
-    /** {"usage":bool,"overlay":bool,"notify":bool} */
+    /** {"usage":bool,"overlay":bool,"notify":bool,"battery":bool} */
     @JavascriptInterface
     fun getPermissionState(): String = JSONObject()
         .put("usage", Perms.hasUsage(activity))
         .put("overlay", Perms.hasOverlay(activity))
         .put("notify", Perms.hasNotify(activity))
+        .put("battery", Perms.hasBattery(activity))
         .toString()
 
     /** usage / overlay / notify 설정 화면 열기 */

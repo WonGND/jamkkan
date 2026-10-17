@@ -15,13 +15,17 @@ import org.json.JSONObject
 /**
  * 잠깐만 화면 = 기존 웹 화면(app/index.html)을 WebView로 띄운 것.
  * 웹 쪽은 window.JamkkanNative 가 있으면 네이티브 모드로 동작한다 (docs/NATIVE.md).
+ *
+ * 브레이크/홈 구분은 '어떻게 열렸는지'(인텐트)로만 한다.
+ *  - 감지 서비스가 연 경우: entry=brake
+ *  - 앱 아이콘으로 연 경우: 홈
+ *  - 최근 앱에서 돌아온 경우: 보던 화면 그대로 (오래된 브레이크는 웹이 알아서 홈으로)
  */
 class MainActivity : Activity() {
 
     private lateinit var webView: WebView
     private var pageLoaded = false
-    private var pendingJs: String? = null
-    private var brakeIntentPending = false
+    private val pendingJs = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +50,7 @@ class MainActivity : Activity() {
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (request.url.host == ASSET_HOST) return false
-                // 바깥 링크는 브라우저로
+                // 바깥 링크는 다른 앱으로
                 try {
                     startActivity(Intent(Intent.ACTION_VIEW, request.url))
                 } catch (_: Exception) {
@@ -56,49 +60,49 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView, url: String?) {
                 pageLoaded = true
-                pendingJs?.let { view.evaluateJavascript(it, null) }
-                pendingJs = null
+                for (js in pendingJs) view.evaluateJavascript(js, null)
+                pendingJs.clear()
             }
         }
 
-        brakeIntentPending = isBrake(intent)
         webView.loadUrl(startUrl(intent))
     }
 
-    /** 감시 중인 앱 때문에 다시 앞으로 올 때 */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (isBrake(intent)) {
-            brakeIntentPending = true
-            val info = JSONObject()
+        val info = if (isBrake(intent)) {
+            JSONObject()
                 .put("entry", "brake")
                 .put("pkg", intent.getStringExtra(EXTRA_PKG) ?: "")
                 .put("label", intent.getStringExtra(EXTRA_LABEL) ?: "")
-            runJs("window.jamkkanLaunch && jamkkanLaunch($info)")
+                .put("at", intent.getLongExtra(EXTRA_AT, System.currentTimeMillis()))
+        } else {
+            JSONObject().put("entry", "app") // 앱 아이콘으로 다시 엶
         }
+        runJs("window.jamkkanLaunch && jamkkanLaunch($info)")
     }
 
     override fun onResume() {
         super.onResume()
-        if (brakeIntentPending) {
-            brakeIntentPending = false
-        } else if (pageLoaded) {
-            // 런처나 최근 앱에서 직접 연 경우: 브레이크 화면이 아니라 홈으로
-            runJs("window.jamkkanLaunch && jamkkanLaunch({entry:'app'})")
-        }
         WatchService.sync(this)
     }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // 웹 화면 안의 뒤로 가기(판단 단계, 시트)를 먼저 처리하고, 더 없으면 원래 앱으로
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            WatchService.markUserReturn()
-            moveTaskToBack(true)
+        if (!pageLoaded) {
+            leaveToPreviousApp()
+            return
         }
+        // 웹 화면에 열린 창(판단 단계, 시트, 설정 등)이 있으면 그걸 먼저 닫고, 없으면 원래 앱으로
+        webView.evaluateJavascript("window.jamkkanBack ? jamkkanBack() : false") { handled ->
+            if (handled != "true") leaveToPreviousApp()
+        }
+    }
+
+    private fun leaveToPreviousApp() {
+        WatchService.markUserReturn()
+        moveTaskToBack(true)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -111,7 +115,7 @@ class MainActivity : Activity() {
     }
 
     fun runJs(js: String) {
-        if (pageLoaded) webView.evaluateJavascript(js, null) else pendingJs = js
+        if (pageLoaded) webView.evaluateJavascript(js, null) else pendingJs.add(js)
     }
 
     private fun isBrake(i: Intent?): Boolean = i?.getStringExtra(EXTRA_ENTRY) == "brake"
@@ -121,7 +125,8 @@ class MainActivity : Activity() {
         if (i == null || !isBrake(i)) return base
         val pkg = i.getStringExtra(EXTRA_PKG) ?: ""
         val label = i.getStringExtra(EXTRA_LABEL) ?: ""
-        return "$base?entry=brake&pkg=${Uri.encode(pkg)}&label=${Uri.encode(label)}"
+        val at = i.getLongExtra(EXTRA_AT, System.currentTimeMillis())
+        return "$base?entry=brake&pkg=${Uri.encode(pkg)}&label=${Uri.encode(label)}&at=$at"
     }
 
     companion object {
@@ -129,6 +134,7 @@ class MainActivity : Activity() {
         const val EXTRA_ENTRY = "entry"
         const val EXTRA_PKG = "pkg"
         const val EXTRA_LABEL = "label"
+        const val EXTRA_AT = "at"
         const val REQ_NOTIFY = 1
     }
 }
