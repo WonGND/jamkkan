@@ -161,12 +161,13 @@ button.row:active{background:var(--fill)}
 .key svg{width:26px;height:26px;color:var(--sub)}
 
 /* 판단 카테고리 */
-.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:28px}
-.ctile{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:14px;min-height:124px;padding:18px 16px 16px;border-radius:16px;background:var(--fill);text-align:left;transition:transform .1s ease}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px}
+.ctile{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;min-height:100px;padding:14px 14px 13px;border-radius:16px;background:var(--fill);text-align:left;transition:transform .1s ease}
 .ctile:active{transform:scale(.96);background:var(--fill-press)}
-.ctile .emo{font-size:32px;line-height:1}
+.ctile .emo{font-size:28px;line-height:1}
 .ctile b{display:block;font-size:17px;font-weight:700;color:var(--fg)}
-.ctile small{display:block;font-size:13px;line-height:18px;color:var(--muted);margin-top:2px}
+.ctile small{display:block;font-size:13px;line-height:17px;color:var(--muted);margin-top:2px;word-break:keep-all}
+.ctile.on{background:var(--weak-bg);box-shadow:inset 0 0 0 2px var(--primary)}
 
 /* 판단 질문 */
 .jitem{background:var(--fill);border-radius:16px;padding:16px 18px}
@@ -203,6 +204,17 @@ button.row:active{background:var(--fill)}
 .sdesc{font-size:15px;color:var(--sub);margin-top:6px}
 .sheet .amount{margin-top:16px}
 .sheet .btn-col{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+.elist{margin-top:16px;border-top:1px solid var(--border)}
+.erow{display:flex;align-items:center;gap:8px;width:100%;min-height:56px;padding:0 4px;border-bottom:1px solid var(--border);font-size:16px}
+.erow:active{background:var(--fill)}
+.erow .k{flex:none;width:68px;color:var(--sub);font-weight:500}
+.erow .v{flex:1;min-width:0;text-align:right;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.erow svg{flex:none;width:18px;height:18px;color:var(--faint)}
+.cgrid.mini{grid-template-columns:repeat(4,1fr);gap:6px;margin-top:16px}
+.cgrid.mini .ctile{min-height:76px;align-items:center;justify-content:center;gap:6px;padding:10px 2px;text-align:center}
+.cgrid.mini .ctile .emo{font-size:26px}
+.cgrid.mini .ctile b{font-size:13px;font-weight:600;line-height:17px}
+.tbtn.danger{color:var(--danger)}
 
 /* ---------- 설정 ---------- */
 .group{font-size:13px;font-weight:600;color:var(--muted);margin:32px 0 4px}
@@ -222,6 +234,10 @@ button.row:active{background:var(--fill)}
 .seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--fill)}
 .seg button{flex:1;height:40px;border-radius:9px;font-size:15px;font-weight:600;color:var(--sub);text-align:center}
 .seg button.on{background:var(--card);color:var(--fg)}
+.seg.grid4{display:grid;grid-template-columns:repeat(4,1fr)}
+.seg.grid3{display:grid;grid-template-columns:repeat(3,1fr)}
+.seg.grid3 button{font-size:14px;white-space:nowrap}
+.seg.grid4 button{font-size:14px;padding:0 2px;white-space:nowrap}
 .qedit{margin-top:12px;padding:16px;border-radius:16px;background:var(--fill)}
 .qedit .qn{font-size:13px;font-weight:600;color:var(--muted)}
 .qedit .inbox{background:var(--card);margin-top:8px;height:48px}
@@ -279,6 +295,9 @@ button.row:active{background:var(--fill)}
   display:flex;align-items:center;gap:12px;padding:14px 16px 14px 20px;border-radius:16px;background:var(--toast);color:#fff;font-size:15px;font-weight:500;
   opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s ease,transform .2s var(--ease)}
 .toast.show{opacity:1;transform:none;pointer-events:auto}
+/* 시트가 열려 있으면 시트 버튼을 가리지 않게 위쪽에 */
+.toast.top{top:calc(16px + env(safe-area-inset-top));bottom:auto;transform:translateY(-12px)}
+.toast.top.show{transform:none}
 .toast span{flex:1}
 .toast button{flex:none;color:#90c2ff;font-weight:600;padding:4px 6px;margin:-4px -6px}
 
@@ -319,7 +338,7 @@ button.row:active{background:var(--fill)}
    - 데이터: localStorage 'jamkkan.v1' (서버 없음)
    - 기능: ① 빠른 판단 ② 대기함 ③ 참은 돈 + 이번 주 지출
    ========================================================= */
-const VERSION = '0.7.0';
+const VERSION = '0.8.0';
 const KEY = 'jamkkan.v1';
 const HOUR = 3600e3;
 const DAY = 24 * HOUR;
@@ -328,21 +347,72 @@ const WEEKS_PER_MONTH = 365 / 7 / 12; // 약 4.345
 /* 판단 카테고리: 카테고리마다 질문·대기 시간·문구가 다름 (fail=왼쪽, pass=오른쪽)
    질문 문구 안의 {시간} → 가격을 일한 시간으로, {남은돈} → 사고 난 뒤 이번 주 남는 돈 */
 const JCATS = {
+  cafe: {
+    emoji: '☕', label: '카페', short: '카페', sub: '커피·음료·디저트', ask: '뭘 마시려고 해요?', ph: '예) 아이스 아메리카노',
+    chips: [1000, 3000, 5000], wait: 20, waitOpts: [10, 20, 30],
+    want: '마시고 싶어?', yes: '마실래', no: '안 마실래', ok: '마셔도 괜찮아요',
+    rec: '주문 기록하기', recToast: '카페 지출로 기록했어요 · 이번 주 지출에도 넣었어요',
+    tip: '물 한 잔 먼저 마셔 보고, 그래도 생각나면 그때 사요',
+    weekly: 'cafe',
+    q: [
+      { text: '오늘 벌써 한 잔 마셨어?',            fail: '마셨어',    pass: '아직' },
+      { text: '물이나 집·회사 커피로는 안 될까?',    fail: '그걸로 돼', pass: '안 돼' },
+      { text: '마시고 나면 {남은돈}. 괜찮아?',       fail: '안 괜찮아', pass: '괜찮아' },
+    ],
+  },
+  cvs: {
+    emoji: '🏪', label: '편의점', short: '편의점', sub: '간식·음료·간편식', ask: '뭘 사려고 해요?', ph: '예) 과자, 음료',
+    chips: [1000, 3000, 5000], wait: 20, waitOpts: [10, 20, 30],
+    want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
+    rec: '구매 기록하기', recToast: '편의점 지출로 기록했어요 · 이번 주 지출에도 넣었어요',
+    tip: '편의점은 들어가는 순간 뭐라도 사게 돼요. 오늘은 그냥 지나가 봐요',
+    weekly: 'cvs',
+    q: [
+      { text: '꼭 필요한 거야, 그냥 들른 거야?',      fail: '그냥 들렀어', pass: '필요해' },
+      { text: '1+1·2+1 때문에 더 담은 거 있어?',     fail: '있어',       pass: '없어' },
+      { text: '사고 나면 {남은돈}. 괜찮아?',          fail: '안 괜찮아',  pass: '괜찮아' },
+    ],
+  },
   food: {
-    emoji: '🍗', label: '음식', short: '음식', sub: '배달·포장·외식', ask: '뭘 먹으려고 해요?', ph: '예) 치킨',
+    emoji: '🍽️', label: '배달·외식', short: '배달·외식', sub: '배달·포장·외식', ask: '뭘 먹으려고 해요?', ph: '예) 치킨',
     chips: [5000, 10000, 20000], wait: 30, waitOpts: [15, 30, 60],
     want: '먹고 싶어?', yes: '먹을래', no: '안 먹을래', ok: '먹어도 괜찮아요',
     rec: '주문 기록하기', recToast: '주문을 기록했어요 · 이번 주 지출에도 넣었어요',
     tip: '물 한 잔 마시고, 그래도 먹고 싶으면 다시 열어 보세요',
-    weekly: 'delivery', // 음식은 산 순간 주간 지출(배달)에 함께 기록
+    weekly: 'delivery', // 산 순간 주간 지출(배달)에 함께 기록
     q: [
       { text: '지금 진짜 배고파?',              fail: '입이 심심해', pass: '배고파' },
       { text: '집에 대신 먹을 거 있어?',         fail: '있다',       pass: '없다' },
       { text: '시키고 나면 {남은돈}. 괜찮아?',   fail: '안 괜찮아',  pass: '괜찮아' },
     ],
   },
+  living: {
+    emoji: '🛒', label: '장보기·생필품', short: '장보기', sub: '식재료·생활용품', ask: '뭘 사려고 해요?', ph: '예) 세제, 휴지',
+    chips: [5000, 10000, 30000], wait: 720, waitOpts: [180, 720, 1440],
+    want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
+    rec: '구매 기록하기', recToast: '구매를 기록했어요',
+    tip: '다 떨어졌을 때 사도 늦지 않아요',
+    q: [
+      { text: '지금 다 떨어졌어?',                         fail: '아직 있어', pass: '다 떨어졌어' },
+      { text: '묶음·대용량 할인 때문에 많이 사는 거야?',     fail: '맞아',      pass: '아니야' },
+      { text: '쓸 수 있는 기간 안에 다 쓸 수 있어?',         fail: '글쎄',      pass: '다 써' },
+    ],
+  },
+  style: {
+    emoji: '👕', label: '옷·뷰티', short: '옷·뷰티', sub: '옷·신발·화장품', ask: '뭘 사려고 해요?', ph: '예) 니트, 향수',
+    chips: [10000, 30000, 50000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
+    want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
+    rec: '구매 기록하기', recToast: '구매를 기록했어요',
+    tip: '장바구니에 넣어 두고 하루 뒤에 다시 보면 마음이 달라져 있을 때가 많아요',
+    q: [
+      { text: '할인·쿠폰 없어도 살까?',            fail: '아니', pass: '그래도 산다' },
+      { text: '비슷한 거 이미 있어?',              fail: '있다', pass: '없다' },
+      { text: '한 달 안에 세 번 넘게 입거나 쓸까?', fail: '글쎄', pass: '그럴 거야' },
+      { text: '{시간} 일할 만큼 가치 있어?',        fail: '아니', pass: '있다' },
+    ],
+  },
   goods: {
-    emoji: '🛍️', label: '물건', short: '물건', sub: '소품·옷·전자기기', ask: '뭘 사려고 해요?', ph: '예) 무선 이어폰',
+    emoji: '🛍️', label: '물건', short: '물건', sub: '전자기기·소품·가구', ask: '뭘 사려고 해요?', ph: '예) 무선 이어폰',
     chips: [10000, 50000, 100000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
     want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
     rec: '구매 기록하기', recToast: '구매를 기록했어요', tip: '',
@@ -354,7 +424,7 @@ const JCATS = {
     ],
   },
   limited: {
-    emoji: '🎁', label: '굿즈·한정판', short: '굿즈', sub: '앨범·콜라보·한정 에디션', ask: '뭘 사려고 해요?', ph: '예) 콜라보 키링',
+    emoji: '🎁', label: '굿즈·한정판', short: '굿즈', sub: '앨범·콜라보·특전', ask: '뭘 사려고 해요?', ph: '예) 콜라보 키링',
     chips: [10000, 30000, 50000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
     want: '사고 싶어?', yes: '살래', no: '안 살래', ok: '사도 괜찮아요',
     rec: '구매 기록하기', recToast: '구매를 기록했어요',
@@ -367,7 +437,7 @@ const JCATS = {
     ],
   },
   exp: {
-    emoji: '🎫', label: '경험·취미', short: '경험', sub: '공연·여행·강의·게임 결제', ask: '뭘 하려고 해요?', ph: '예) 콘서트 티켓',
+    emoji: '🎫', label: '경험·취미', short: '경험', sub: '공연·여행·강의·게임', ask: '뭘 하려고 해요?', ph: '예) 콘서트 티켓',
     chips: [10000, 50000, 100000], wait: 1440, waitOpts: [720, 1440, 2880, 4320],
     want: '하고 싶어?', yes: '할래', no: '안 할래', ok: '해도 괜찮아요',
     rec: '결제 기록하기', recToast: '결제를 기록했어요', tip: '',
@@ -379,7 +449,8 @@ const JCATS = {
     ],
   },
 };
-const JCAT_ORDER = ['food', 'goods', 'limited', 'exp'];
+// 고르는 화면의 순서 (2열 × 4줄): 자주 쓰는 소액 → 큰 지출
+const JCAT_ORDER = ['cafe', 'cvs', 'food', 'living', 'style', 'goods', 'limited', 'exp'];
 const jcat = (k) => JCATS[k] || JCATS.goods;
 function defaultCats() {
   const o = {};
@@ -444,12 +515,17 @@ function josa(word, withFinal, noFinal) {
 /* 연결 앱: 휴대폰 앱 목록은 웹앱이 읽을 수 없어서, 같은 앱을 '모드 및 루틴'에서도 골라야 함.
    c = 그 앱에서 고르면 바로 이어질 판단 카테고리 ('' = 무엇을 살지 먼저 물어봄) */
 const APP_GROUPS = [
-  { g: 'shop', label: '쇼핑', emoji: '🛍️', apps: ['쿠팡', '11번가', 'G마켓', 'SSG닷컴', '무신사', '29CM', '지그재그', '에이블리', '올리브영', '오늘의집', '컬리', '알리익스프레스', '테무', '당근'].map((n) => ({ n, c: 'goods' })) },
+  // 종합몰은 무엇이든 살 수 있어서 카테고리를 먼저 물어봄('')
+  { g: 'shop', label: '쇼핑', emoji: '🛍️', apps: [
+    ...['쿠팡', '11번가', 'G마켓', 'SSG닷컴', '알리익스프레스', '테무', '당근'].map((n) => ({ n, c: '' })),
+    ...['무신사', '29CM', '지그재그', '에이블리', '올리브영'].map((n) => ({ n, c: 'style' })),
+    { n: '오늘의집', c: 'goods' }, { n: '컬리', c: 'living' }] },
   { g: 'food', label: '배달', emoji: '🛵', apps: ['배달의민족', '쿠팡이츠', '요기요', '땡겨요'].map((n) => ({ n, c: 'food' })) },
+  { g: 'cafe', label: '카페', emoji: '☕', apps: ['스타벅스', '메가MGC커피', '컴포즈커피', '투썸플레이스', '이디야', '빽다방'].map((n) => ({ n, c: 'cafe' })) },
   { g: 'pay', label: '결제', emoji: '💳', apps: ['네이버페이', '카카오페이', '토스', '삼성 월렛', '페이코'].map((n) => ({ n, c: '' })) },
   { g: 'fan', label: '굿즈·티켓', emoji: '🎫', apps: [{ n: '위버스', c: 'limited' }, { n: '인터파크 티켓', c: 'exp' }, { n: '멜론티켓', c: 'exp' }, { n: '티켓링크', c: 'exp' }] },
 ];
-const GROUP_EMOJI = { shop: '🛍️', food: '🛵', pay: '💳', fan: '🎫' };
+const GROUP_EMOJI = { shop: '🛍️', food: '🛵', cafe: '☕', pay: '💳', fan: '🎫' };
 const appEmoji = (a) => GROUP_EMOJI[a.g] || (a.cat && JCATS[a.cat] ? JCATS[a.cat].emoji : '📱');
 // 앱 이름으로 추천 목록의 그룹·카테고리 찾기 (네이티브에서 고른 앱에도 같은 기본값을 쓰기 위해)
 function presetOf(label) {
@@ -726,7 +802,7 @@ window.jamkkanBack = function () {
 };
 function handleBack() {
   const top = layers[layers.length - 1];
-  if (top === 'sheet') closeSheet();
+  if (top === 'sheet') { if (E && E.view !== 'main') { E.view = 'main'; renderItemSheet(); } else closeSheet(); }
   else if (top === 'judge') judgeBack();
   else if (top === 'recheck') closeLayer('recheck');
   else if (top === 'settings') settingsBack();
@@ -750,6 +826,7 @@ function toast(msg, action) {
   // 저장 실패 안내가 바로 뒤의 '기록했어요' 같은 안내에 덮이지 않게
   if (msg !== SAVE_FAIL_MSG && Date.now() - saveFailAt < 2500) return;
   const t = $('#toast');
+  t.classList.toggle('top', layers.includes('sheet'));
   t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button data-act="toastAct">${esc(action.label)}</button>` : '');
   toastFn = action ? action.fn : null;
   t.classList.add('show');
@@ -801,7 +878,10 @@ function renderHome() {
     if (UI.showSpends) {
       html += `<div style="margin-top:4px">${week.map((x) => {
         const c = catOf(x.cat);
-        return `<button class="row" data-act="spendItem" data-id="${x.id}"><span class="emo">${c.emoji}</span><span class="main"><span class="t" style="display:block">${c.label}</span><span class="s" style="display:block">${DAYS[new Date(x.at).getDay()]} ${timeLabel(x.at)}</span></span><span class="r num">${won(x.amount)}</span></button>`;
+        const it = x.itemId ? S.items.find((i) => i.id === x.itemId) : null;
+        const when = `${DAYS[new Date(x.at).getDay()]} ${timeLabel(x.at)}`;
+        if (it) return `<button class="row" data-act="recItem" data-id="${it.id}"><span class="emo">${jcat(it.cat).emoji}</span><span class="main"><span class="t" style="display:block">${esc(it.name)}</span><span class="s" style="display:block">${when} · 판단해서 기록</span></span><span class="r num">${won(x.amount)}</span></button>`;
+        return `<button class="row" data-act="spendItem" data-id="${x.id}"><span class="emo">${c.emoji}</span><span class="main"><span class="t" style="display:block">${c.label}</span><span class="s" style="display:block">${when}</span></span><span class="r num">${won(x.amount)}</span></button>`;
       }).join('')}</div>`;
     }
   }
@@ -893,12 +973,117 @@ document.addEventListener('pointerdown', (e) => {
 
 /* ---------- 시트 ---------- */
 function openSheet(html) {
+  E = null;
   $('#sheet').innerHTML = `<div class="handle"></div>` + html;
   openLayer('sheet');
 }
 function closeSheet() {
   closeLayer('sheet');
   PAD = (layers.includes('judge') && J && J.step === 'price') ? { obj: J.pad, max: 99999999, render: renderJudge } : null;
+}
+
+/* 판단 기록·대기함 고치기 (카테고리·금액·이름) */
+let E = null; // {id, view:'main'|'cat'|'amt'|'name', pad}
+const itemOf = (id) => S.items.find((x) => x.id === id);
+// 산 기록이고 주간 지출에 들어가는 카테고리면 연결된 주간 지출을 맞추고, 아니면 뺌
+function syncLinkedSpend(it) {
+  const w = it.status === 'bought' ? jcat(it.cat).weekly : null;
+  if (!w) { S.spends = S.spends.filter((x) => x.itemId !== it.id); return; }
+  const linked = S.spends.find((x) => x.itemId === it.id);
+  if (linked) { linked.cat = w; linked.amount = it.price; }
+  else S.spends.push({ id: uid(), cat: w, amount: it.price, at: it.decidedAt || Date.now(), itemId: it.id });
+}
+// 고친 뒤 되돌리기 함수를 돌려줌
+function editItem(id, patch) {
+  const it = itemOf(id);
+  if (!it) return () => {};
+  const before = JSON.parse(JSON.stringify(it));
+  const linkedBefore = S.spends.filter((x) => x.itemId === id).map((x) => ({ ...x }));
+  if (patch.cat && patch.cat !== it.cat && JCATS[patch.cat]) {
+    // 걸린 질문 번호는 원래 카테고리 기준이라, 문장으로 바꿔 보관
+    if (it.failQ !== null && it.failQ !== undefined) { it.failText = questionText(it.cat, it.failQ, it.price); it.failQ = null; }
+    it.cat = patch.cat;
+  }
+  if (patch.price > 0) it.price = patch.price;
+  if (patch.name) it.name = String(patch.name).trim().slice(0, 40) || it.name;
+  syncLinkedSpend(it);
+  save();
+  return () => {
+    const cur = itemOf(id);
+    if (!cur) return;
+    for (const k of Object.keys(cur)) delete cur[k];
+    Object.assign(cur, before);
+    S.spends = S.spends.filter((x) => x.itemId !== id).concat(linkedBefore);
+    save(); renderHome();
+    if (E && E.id === id && layers.includes('sheet')) renderItemSheet();
+  };
+}
+function openItemSheet(id) {
+  openSheet('<div id="itemBody"></div>');
+  E = { id, view: 'main', pad: null };
+  renderItemSheet();
+}
+function renderItemSheet() {
+  const body = $('#itemBody');
+  const it = E && itemOf(E.id);
+  if (!body || !it) { if (layers.includes('sheet')) closeSheet(); return; }
+  const C = jcat(it.cat);
+  const chev = ICON.right;
+  if (E.view === 'cat') {
+    PAD = null;
+    lockInput(300);
+    body.innerHTML = `<div class="stitle">어떤 카테고리예요?</div>
+      <div class="sdesc">${esc(it.name)} · <span class="num">${won(it.price)}</span></div>
+      <div class="cgrid mini">${JCAT_ORDER.map((k) => `<button class="ctile ${k === it.cat ? 'on' : ''}" data-act="eCat" data-cat="${k}" aria-pressed="${k === it.cat}"><span class="emo">${JCATS[k].emoji}</span><b>${JCATS[k].short}</b></button>`).join('')}</div>
+      ${it.status === 'bought' ? '<div class="cap">카페·편의점·배달·외식으로 바꾸면 이번 주 지출에도 들어가요</div>' : ''}
+      <div class="btn-col"><button class="btn btn-light" data-act="eBack">취소</button></div>`;
+    return;
+  }
+  if (E.view === 'amt') {
+    PAD = { obj: E.pad, max: 99999999, render: renderItemSheet };
+    body.innerHTML = `<div class="stitle">금액을 고쳐요</div>
+      <div class="sdesc">${C.emoji} ${esc(it.name)}</div>
+      ${amountHTML(E.pad)}
+      <div class="cap" style="min-height:19.5px">${E.pad.fresh ? '지금 금액이에요. 숫자를 누르면 새로 입력돼요' : ''}</div>
+      ${keypadHTML()}
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-light" data-act="eBack">취소</button>
+        <button class="btn btn-primary grow" data-act="eAmtSave" ${E.pad.value ? '' : 'disabled'}>저장</button>
+      </div>`;
+    return;
+  }
+  if (E.view === 'name') {
+    PAD = null;
+    body.innerHTML = `<div class="stitle">이름을 고쳐요</div>
+      <div class="inbox" style="margin-top:16px"><input id="eName" type="text" maxlength="40" value="${esc(it.name)}" enterkeyhint="done" autocomplete="off" aria-label="이름"></div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-light" data-act="eBack">취소</button>
+        <button class="btn btn-primary grow" data-act="eNameSave">저장</button>
+      </div>`;
+    return;
+  }
+  PAD = null;
+  const waiting = it.status === 'waiting';
+  const left = waiting ? it.waitUntil - Date.now() : 0;
+  const desc = waiting
+    ? `${remainLabel(left)} (${esc(whenLabel(it.waitUntil))}에 다시 물어봐요)`
+    : `${it.status === 'passed' ? '참았어요' : '샀어요'} · ${esc(whenLabel(it.decidedAt))}`;
+  const linked = S.spends.some((x) => x.itemId === it.id);
+  body.innerHTML = `<div class="stitle">${C.emoji} ${esc(it.name)}</div>
+    <div class="sdesc">${desc}</div>
+    <div class="elist">
+      <button class="erow" data-act="eView" data-v="cat"><span class="k">카테고리</span><span class="v">${C.emoji} ${C.label}</span>${chev}</button>
+      <button class="erow" data-act="eView" data-v="amt"><span class="k">금액</span><span class="v num">${won(it.price)}</span>${chev}</button>
+      <button class="erow" data-act="eView" data-v="name"><span class="k">이름</span><span class="v">${esc(it.name)}</span>${chev}</button>
+    </div>
+    <div class="cap">${linked ? '이번 주 지출에도 들어가 있어요. 고치면 함께 바뀌어요' : '잘못 고른 게 있으면 눌러서 고칠 수 있어요'}</div>
+    ${waiting ? `<div class="btn-col">
+        <button class="btn btn-primary" data-act="passNow" data-id="${it.id}">지금 안 사기로 할래요</button>
+        <button class="btn btn-light" data-act="sheetClose">계속 기다릴게요</button>
+        <button class="tbtn danger" data-act="delItem" data-id="${it.id}">대기함에서 삭제</button></div>`
+      : `<div class="btn-col">
+        <button class="btn btn-light" data-act="sheetClose">닫기</button>
+        <button class="tbtn danger" data-act="delItem" data-id="${it.id}">기록 삭제하기</button></div>`}`;
 }
 
 /* 소액 원탭 기록 */
@@ -1107,7 +1292,7 @@ function recordWeekly(it) {
   const w = jcat(it.cat).weekly;
   if (!w) return;
   S.spends = S.spends.filter((x) => x.itemId !== it.id);
-  S.spends.push({ id: uid(), cat: w, amount: it.price, at: Date.now(), itemId: it.id });
+  S.spends.push({ id: uid(), cat: w, amount: it.price, at: it.decidedAt || Date.now(), itemId: it.id });
 }
 function addItem(status) {
   const now = Date.now();
@@ -1144,7 +1329,8 @@ function renderRecheck() {
     pg.innerHTML = `<div class="pin">${head}${passedHTML(it, due.length ? 'rNext' : 'rClose')}</div>`;
     return;
   }
-  const reason = it.failQ !== null && it.failQ !== undefined ? `‘${questionText(it.cat, it.failQ, it.price)}’에서 걸렸었어요` : '';
+  const reason = it.failQ !== null && it.failQ !== undefined ? `‘${questionText(it.cat, it.failQ, it.price)}’에서 걸렸었어요`
+    : it.failText ? `‘${it.failText}’에서 걸렸었어요` : '';
   pg.innerHTML = `<div class="pin">${head}<div class="pbody">
       <span class="badge weak" style="align-self:flex-start">${durLabel(Date.now() - it.at)} 기다렸어요</span>
       <h1 class="qtitle" style="margin-top:12px">아직도 ${C.want}</h1>
@@ -1341,7 +1527,7 @@ function renderAppPicker() {
     ${custom.length ? `<div class="pickgrid" style="margin-bottom:10px">${custom.map((a) => `<button class="pick on" data-act="appToggle" data-g="custom" data-n="${esc(a.name)}" data-c="${a.cat}">${esc(a.name)} ✕</button>`).join('')}</div>` : ''}
     <div class="inbox"><input id="newApp" type="text" maxlength="20" placeholder="앱 이름 (예: 번개장터)" value="${esc(NEWAPP.name)}" autocomplete="off" aria-label="추가할 앱 이름"></div>
     <div class="flabel" style="margin-top:10px">이 앱에서 고르면</div>
-    <div class="seg">${catOpts.map(([k, l]) => `<button class="${NEWAPP.cat === k ? 'on' : ''}" data-act="newAppCat" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="seg grid3">${catOpts.map(([k, l]) => `<button class="${NEWAPP.cat === k ? 'on' : ''}" data-act="newAppCat" data-v="${k}">${l}</button>`).join('')}</div>
     <button class="btn btn-weak" style="margin-top:10px;height:48px;border-radius:14px;font-size:16px" data-act="appAdd">추가하기</button>
     <div style="position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--sheet);padding:12px 0 0;margin-top:16px">
       <button class="btn btn-primary" data-act="appPickDone">${apps.length ? `${apps.length}개 연결하기` : '닫기'}</button></div>`;
@@ -1443,7 +1629,7 @@ ${Platform.native ? nativeGuideSteps() : `
 
 /* ---------- 설정 ---------- */
 let settingsMode = 'normal';
-let settingsCat = 'food';
+let settingsCat = JCAT_ORDER[0];
 function openSettings(mode) {
   settingsMode = mode || 'normal';
   $('#pg-settings').innerHTML = '';
@@ -1511,7 +1697,7 @@ function renderSettings() {
     <div id="wageBox">${wageBoxHTML()}</div>`;
 
   h += `<div class="group">주간 한도</div>
-    ${moneyField('weeklyLimit', '이번 주에 쓸 소액 지출 한도', '편의점·카페·배달·기타와, 판단해서 먹기로 한 음식이 들어가요. 최근 4~8주 평균보다 10~20% 낮게 잡는 걸 권해요')}`;
+    ${moneyField('weeklyLimit', '이번 주에 쓸 소액 지출 한도', '원탭으로 기록한 편의점·카페·배달·기타와, 판단해서 사기로 한 카페·편의점·배달·외식이 들어가요. 최근 4~8주 평균보다 10~20% 낮게 잡는 걸 권해요')}`;
 
   if (!onb) {
     h += `<div class="field"><span class="flabel">한 주의 시작</span>
@@ -1525,7 +1711,7 @@ function renderSettings() {
         <div class="seg">${COOLDOWN_OPTS.map((v) => `<button class="${cooldownMin() === v ? 'on' : ''}" data-act="seg" data-k="brakeCooldown" data-v="${v}">${cooldownLabel(v)}</button>`).join('')}</div>
         <div class="help">‘매번’이면 연결한 앱을 켤 때마다 물어봐요. 시간을 고르면 한 번 넘긴 뒤 그동안은 묻지 않아요</div></div>`;
     h += `<div class="group">카테고리별 판단 기준</div>
-      <div class="seg">${JCAT_ORDER.map((k) => `<button class="${settingsCat === k ? 'on' : ''}" data-act="setCat" data-c="${k}">${JCATS[k].short}</button>`).join('')}</div>
+      <div class="seg grid4">${JCAT_ORDER.map((k) => `<button class="${settingsCat === k ? 'on' : ''}" data-act="setCat" data-c="${k}">${JCATS[k].short}</button>`).join('')}</div>
       ${catEditorHTML(settingsCat)}`;
     h += `<div class="group">데이터</div>
       <div class="help" style="margin-top:0">${Platform.native ? '모든 기록은 이 휴대폰에만 저장돼요. 잠깐만 앱을 지우거나 앱 데이터를 삭제하면 함께 지워져요.' : '모든 기록은 이 휴대폰의 브라우저에만 저장돼요. 브라우저에서 사이트 데이터를 지우면 함께 지워져요.'}</div>
@@ -1588,6 +1774,7 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'jName' && J && J.name.trim()) { e.preventDefault(); ACT.jNameNext(); }
+  if (e.key === 'Enter' && e.target.id === 'eName') { e.preventDefault(); ACT.eNameSave(); }
 });
 
 /* ---------- 행동 ---------- */
@@ -1681,15 +1868,8 @@ const ACT = {
   waitItem: (el) => {
     const it = S.items.find((x) => x.id === el.dataset.id);
     if (!it) return;
-    const left = it.waitUntil - Date.now();
-    if (left <= 0) { recheckDismissed = false; openRecheck(it.id); return; }
-    openSheet(`<div class="stitle">${esc(it.name)}</div>
-      <div class="sdesc num">${won(it.price)} · ${remainLabel(left)} (${esc(whenLabel(it.waitUntil))}에 다시 물어봐요)</div>
-      <div class="btn-col">
-        <button class="btn btn-primary" data-act="passNow" data-id="${it.id}">지금 안 사기로 할래요</button>
-        <button class="btn btn-light" data-act="sheetClose">계속 기다릴게요</button>
-        <button class="tbtn" style="color:var(--danger)" data-act="delItem" data-id="${it.id}">대기함에서 삭제</button>
-      </div>`);
+    if (it.waitUntil - Date.now() <= 0) { recheckDismissed = false; openRecheck(it.id); return; }
+    openItemSheet(it.id);
   },
   passNow: (el) => {
     const it = S.items.find((x) => x.id === el.dataset.id);
@@ -1698,13 +1878,48 @@ const ACT = {
     save(); closeSheet(); renderHome();
     toast(`${won(it.price)} 아꼈어요`);
   },
-  recItem: (el) => {
-    const it = S.items.find((x) => x.id === el.dataset.id);
+  recItem: (el) => { if (S.items.some((x) => x.id === el.dataset.id)) openItemSheet(el.dataset.id); },
+  eView: (el) => {
+    if (!E || !itemOf(E.id)) return;
+    const it = itemOf(E.id);
+    E.view = el.dataset.v;
+    if (E.view === 'amt') E.pad = { value: it.price, fresh: true };
+    renderItemSheet();
+    if (E.view === 'name') { const inp = $('#eName'); if (inp) { inp.focus(); inp.select(); } }
+  },
+  eBack: () => { if (E) { E.view = 'main'; renderItemSheet(); } },
+  eCat: (el) => {
+    if (!E || inputLocked()) return;
+    const it = itemOf(E.id), k = el.dataset.cat;
+    if (!it || !JCATS[k]) return;
+    if (k === it.cat) { E.view = 'main'; renderItemSheet(); return; }
+    const undo = editItem(it.id, { cat: k });
+    E.view = 'main'; renderItemSheet(); renderHome();
+    toast(`${jcat(k).emoji} ${jcat(k).label}${josa(jcat(k).label, '으로', '로')} 바꿨어요`, { label: '되돌리기', fn: undo });
+  },
+  eAmtSave: () => {
+    if (!E || E.view !== 'amt' || !E.pad || !E.pad.value) return;
+    const it = itemOf(E.id);
     if (!it) return;
-    openSheet(`<div class="stitle">${esc(it.name)}</div>
-      <div class="sdesc num">${won(it.price)} · ${it.status === 'passed' ? '참았어요' : '샀어요'} · ${esc(whenLabel(it.decidedAt))}</div>
-      <div class="btn-col"><button class="btn btn-danger" data-act="delItem" data-id="${it.id}">기록 삭제하기</button>
-      <button class="btn btn-light" data-act="sheetClose">닫기</button></div>`);
+    const v = E.pad.value;
+    if (v !== it.price) {
+      const undo = editItem(it.id, { price: v });
+      toast(`금액을 ${won(v)}으로 고쳤어요`, { label: '되돌리기', fn: undo });
+    }
+    E.view = 'main'; renderItemSheet(); renderHome();
+  },
+  eNameSave: () => {
+    if (!E || E.view !== 'name') return;
+    const inp = $('#eName');
+    const it = itemOf(E.id);
+    const v = inp ? inp.value.trim() : '';
+    if (!it || !v) return;
+    if (v !== it.name) {
+      const undo = editItem(it.id, { name: v });
+      toast('이름을 고쳤어요', { label: '되돌리기', fn: undo });
+    }
+    if (inp) inp.blur();
+    E.view = 'main'; renderItemSheet(); renderHome();
   },
   delItem: (el) => {
     const idx = S.items.findIndex((x) => x.id === el.dataset.id);
